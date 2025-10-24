@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 FinanceApp - Ứng dụng Quản lý Tài chính Cá nhân
 
-## Getting Started
+Ứng dụng quản lý tài chính hiện đại, thông minh và dễ sử dụng, được xây dựng với Next.js 15, TypeScript, MongoDB và NextAuth.
 
-First, run the development server:
+## ✨ Tính năng chính
+
+### 🔐 Bảo mật & Xác thực
+- ✅ Đăng ký/Đăng nhập với email & password
+- ✅ Mã hóa mật khẩu với bcrypt
+- ✅ Session management với JWT
+- ✅ Protected routes với middleware
+- ✅ Bảo mật API endpoints
+
+### 📊 Dashboard & Tổng quan
+- ✅ Thống kê tổng thu nhập, chi tiêu, số dư
+- ✅ Biểu đồ phân tích trực quan (Line, Bar, Pie charts)
+- ✅ Giao dịch gần đây
+- ✅ Responsive trên mọi thiết bị
+
+### 💸 Quản lý Giao dịch
+- ✅ Thêm/Xóa giao dịch (Thu nhập & Chi tiêu)
+- ✅ Phân loại theo danh mục
+- ✅ Tìm kiếm và lọc nâng cao
+- ✅ Ghi chú mô tả chi tiết
+
+### 🎯 Quản lý Ngân sách
+- ✅ Thiết lập hạn mức chi tiêu theo danh mục
+- ✅ Theo dõi % sử dụng ngân sách
+- ✅ Cảnh báo khi sắp vượt/vượt ngân sách
+- ✅ Tự động tính toán chi tiêu thực tế
+
+### 📈 Báo cáo & Phân tích
+- ✅ Biểu đồ xu hướng theo tháng
+- ✅ Phân tích chi tiêu theo danh mục
+- ✅ So sánh thu nhập vs chi tiêu
+- ✅ Tỷ lệ tiết kiệm
+
+## 🚀 Công nghệ sử dụng
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: MongoDB với Mongoose
+- **Authentication**: NextAuth v4
+- **UI**: TailwindCSS v4
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Date**: date-fns
+
+## 📦 Cài đặt
+
+### 1. Cài đặt dependencies
+
+```bash
+npm install
+```
+
+### 2. Cấu hình môi trường
+
+Tạo file `.env.local`:
+
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/finance-app
+AUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### 3. Chạy development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000) để xem ứng dụng.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎯 Hướng dẫn sử dụng
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Đăng ký/Đăng nhập** - Tạo tài khoản hoặc đăng nhập
+2. **Dashboard** - Xem tổng quan tài chính
+3. **Giao dịch** - Quản lý thu chi hàng ngày
+4. **Ngân sách** - Thiết lập và theo dõi ngân sách
+5. **Báo cáo** - Phân tích chi tiết tài chính
 
-## Learn More
+## 🔒 Bảo mật
 
-To learn more about Next.js, take a look at the following resources:
+- ✅ Mật khẩu được hash với bcrypt
+- ✅ JWT tokens với expiry time
+- ✅ Protected API routes
+- ✅ Server-side validation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📝 License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+MIT License
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Happy Coding! 🚀**
