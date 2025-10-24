@@ -56,17 +56,25 @@ export function Sidebar() {
     if ('Notification' in window && 'serviceWorker' in navigator) {
       const saved = localStorage.getItem('notificationsEnabled');
       setNotificationsEnabled(saved === 'true' && Notification.permission === 'granted');
+      
+      // Schedule daily notifications if enabled
+      if (saved === 'true' && Notification.permission === 'granted') {
+        import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
+          // Schedule for 7:00 AM daily
+          NotificationScheduler.scheduleDaily(7, 0, () => {
+            NotificationScheduler.sendDailyNotification();
+          });
+          console.log('Daily notifications scheduled for 7:00 AM');
+        });
+      }
     }
   }, []);
 
   const toggleNotifications = async () => {
+    console.log('Toggle notifications clicked');
+    
     if (!('Notification' in window)) {
       alert('Trình duyệt của bạn không hỗ trợ thông báo');
-      return;
-    }
-
-    if (!('serviceWorker' in navigator)) {
-      alert('Trình duyệt của bạn không hỗ trợ Service Worker');
       return;
     }
 
@@ -74,8 +82,11 @@ export function Sidebar() {
 
     try {
       if (!notificationsEnabled) {
+        console.log('Requesting notification permission...');
+        
         // Request permission first
         const permission = await Notification.requestPermission();
+        console.log('Permission result:', permission);
         
         if (permission !== 'granted') {
           alert('Bạn cần cho phép thông báo để sử dụng tính năng này');
@@ -83,79 +94,89 @@ export function Sidebar() {
           return;
         }
 
-        // Wait for service worker to be ready
-        const registration = await navigator.serviceWorker.ready;
+        // Save to localStorage
+        localStorage.setItem('notificationsEnabled', 'true');
+        setNotificationsEnabled(true);
         
-        // Check if push manager is available
-        if (!registration.pushManager) {
-          alert('Trình duyệt không hỗ trợ Push Notifications');
-          setIsLoadingNotification(false);
-          return;
+        // Schedule daily notifications
+        import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
+          NotificationScheduler.scheduleDaily(7, 0, () => {
+            NotificationScheduler.sendDailyNotification();
+          });
+          console.log('Daily notifications scheduled for 7:00 AM');
+        });
+        
+        // Show test notification (simple version without service worker)
+        new Notification('🎉 Thông báo đã bật!', {
+          body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+          icon: '/image.png',
+        });
+        
+        // Try to register with service worker if available (optional)
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(async (registration) => {
+            try {
+              const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(
+                  'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
+                )
+              });
+              
+              // Save to backend (optional, won't block UI)
+              fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription }),
+              }).catch(err => console.log('Backend save failed:', err));
+            } catch (err) {
+              console.log('Push subscription failed (optional):', err);
+            }
+          }).catch(err => {
+            console.log('Service worker not ready (optional):', err);
+          });
         }
-
-        // Subscribe to push notifications (simplified - no VAPID for now)
-        try {
-          const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(
-              'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
-            )
-          });
-
-          // Save subscription
-          const response = await fetch('/api/notifications/subscribe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subscription }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to save subscription');
-          }
-
-          localStorage.setItem('notificationsEnabled', 'true');
-          setNotificationsEnabled(true);
-          
-          // Show test notification
-          registration.showNotification('🎉 Thông báo đã bật!', {
-            body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7h sáng',
-            icon: '/image.png',
-            badge: '/image.png',
-          });
-        } catch (subError) {
-          console.error('Subscription error:', subError);
-          alert('Không thể đăng ký nhận thông báo. Vui lòng thử lại sau.');
-        }
+        
+        console.log('Notifications enabled successfully!');
       } else {
         // Disable notifications
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          
-          if (subscription) {
-            await subscription.unsubscribe();
-            
-            // Remove from backend
-            await fetch('/api/notifications/unsubscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ endpoint: subscription.endpoint }),
-            });
-          }
-          
-          localStorage.setItem('notificationsEnabled', 'false');
-          setNotificationsEnabled(false);
-          
-          alert('✅ Đã tắt thông báo');
-        } catch (unsubError) {
-          console.error('Unsubscribe error:', unsubError);
+        console.log('Disabling notifications...');
+        
+        localStorage.setItem('notificationsEnabled', 'false');
+        setNotificationsEnabled(false);
+        
+        // Cancel scheduled notifications
+        import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
+          NotificationScheduler.cancelDaily();
+          console.log('Daily notifications cancelled');
+        });
+        
+        // Try to unsubscribe from service worker if available
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(async (registration) => {
+            const subscription = await registration.pushManager.getSubscription();
+            if (subscription) {
+              await subscription.unsubscribe();
+              fetch('/api/notifications/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: subscription.endpoint }),
+              }).catch(err => console.log('Backend unsubscribe failed:', err));
+            }
+          }).catch(err => {
+            console.log('Service worker not available:', err);
+          });
         }
+        
+        console.log('Notifications disabled');
+        alert('✅ Đã tắt thông báo');
       }
     } catch (error) {
       console.error('Notification toggle error:', error);
       alert('Có lỗi xảy ra: ' + (error as Error).message);
     } finally {
       setIsLoadingNotification(false);
+      console.log('Toggle complete');
     }
   };
 

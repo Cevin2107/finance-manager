@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import mongoose from 'mongoose';
+// @ts-ignore - web-push doesn't have TypeScript definitions
 import webpush from 'web-push';
 
 // Configure web-push with VAPID keys
