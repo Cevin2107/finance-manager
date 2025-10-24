@@ -8,7 +8,7 @@ import { openai, AI_MODEL, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const transactions = await Transaction.find({
-      userEmail: session.user.email,
+      userId: session.user.id,
       date: { $gte: startDate },
     })
       .sort({ date: -1 })

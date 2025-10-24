@@ -94,153 +94,166 @@ export function FloatingAIChat() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-[400px] h-[600px] flex flex-col shadow-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
-          <Card className="h-full flex flex-col">
+        <div className="fixed bottom-6 right-6 z-50 w-[420px] h-[650px] flex flex-col animate-in slide-in-from-bottom-5 duration-300">
+          <div className="h-full flex flex-col bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                <div className="w-11 h-11 bg-white/25 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">AI Assistant</h3>
-                  <p className="text-white/80 text-xs">Trợ lý tài chính thông minh</p>
+                  <h3 className="text-white font-bold text-lg">AI Assistant</h3>
+                  <p className="text-white/90 text-xs">Trợ lý tài chính thông minh</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-200 hover:rotate-90"
                 aria-label="Close chat"
               >
                 <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <CardContent className="flex-1 flex flex-col overflow-hidden p-4">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 px-1">
-                {messages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                      <Bot className="w-7 h-7 text-white" />
-                    </div>
-                    <p className="text-gray-800 dark:text-gray-200 text-sm mb-2 font-semibold">
-                      Xin chào{session?.user?.name ? ` ${session.user.name}` : ''}! 👋
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                      Tôi có thể giúp gì cho bạn?
-                    </p>
-                    <div className="space-y-2">
-                      {quickQuestions.map((q, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSend(q)}
-                          className="w-full text-xs px-3 py-2.5 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 hover:from-blue-100 hover:to-purple-100 dark:hover:from-gray-600 dark:hover:to-gray-500 rounded-lg text-left transition-all duration-200 border border-blue-100 dark:border-gray-600 hover:shadow-md"
-                        >
-                          <Sparkles className="w-3 h-3 inline-block mr-1 text-purple-500" />
-                          {q}
-                        </button>
-                      ))}
-                    </div>
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
+              {messages.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
+                    <Bot className="w-8 h-8 text-white" />
                   </div>
-                ) : (
-                  messages.map((msg, idx) => (
+                  <p className="text-gray-800 dark:text-gray-200 text-base mb-2 font-bold">
+                    Xin chào{session?.user?.name ? ` ${session.user.name}` : ''}! 👋
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
+                    Tôi có thể giúp gì cho bạn hôm nay?
+                  </p>
+                  <div className="space-y-2 max-w-[280px] mx-auto">
+                    {quickQuestions.map((q, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleSend(q)}
+                        className="w-full text-sm px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-xl text-left transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-purple-500 hover:shadow-lg group"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 inline-block mr-2 text-purple-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-gray-700 dark:text-gray-300">{q}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                messages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex gap-3 ${
+                      msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                    }`}
+                  >
                     <div
-                      key={idx}
-                      className={`flex gap-2 ${
-                        msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                      className={`w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600'
+                          : 'bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500'
+                      }`}
+                    >
+                      {msg.role === 'user' ? (
+                        <User className="w-5 h-5 text-white" />
+                      ) : (
+                        <Bot className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div
+                      className={`flex-1 max-w-[75%] ${
+                        msg.role === 'user' ? 'text-right' : 'text-left'
                       }`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
+                        className={`inline-block px-4 py-3 text-sm shadow-md ${
                           msg.role === 'user'
-                            ? 'bg-gradient-to-br from-blue-500 to-blue-600'
-                            : 'bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500'
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl rounded-tr-lg'
+                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-3xl rounded-tl-lg'
                         }`}
                       >
-                        {msg.role === 'user' ? (
-                          <User className="w-4 h-4 text-white" />
+                        {msg.role === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.content}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
-                          <Bot className="w-4 h-4 text-white" />
+                          <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                         )}
                       </div>
-                      <div
-                        className={`flex-1 max-w-[75%] ${
-                          msg.role === 'user' ? 'text-right' : 'text-left'
-                        }`}
-                      >
-                        <div
-                          className={`inline-block px-3 py-2 rounded-2xl text-sm shadow-sm ${
-                            msg.role === 'user'
-                              ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm'
-                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-sm'
-                          }`}
-                        >
-                          {msg.role === 'assistant' ? (
-                            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {msg.content}
-                              </ReactMarkdown>
-                            </div>
-                          ) : (
-                            <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 px-1">
-                          {msg.timestamp.toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {loading && (
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
-                      <Bot className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-2xl rounded-tl-sm shadow-sm">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                        <div className="w-2 h-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 px-2">
+                        {msg.timestamp.toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {error && (
-                <Alert className="mb-3">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">{error}</span>
-                </Alert>
+                ))
               )}
 
-              {/* Input */}
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  placeholder="Nhập câu hỏi..."
-                  disabled={loading}
-                  className="flex-1 text-sm"
-                />
-                <Button
+              {loading && (
+                <div className="flex gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-5 py-3 rounded-3xl rounded-tl-lg shadow-md">
+                    <div className="flex gap-1.5">
+                      <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce" />
+                      <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      <div className="w-2 h-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder="Nhập câu hỏi của bạn..."
+                    disabled={loading}
+                    className="w-full px-4 py-3 pr-12 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <button
                   onClick={() => handleSend()}
                   disabled={!input.trim() || loading}
-                  variant="primary"
-                  size="sm"
+                  className="flex-shrink-0 w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-700 dark:disabled:to-gray-600 rounded-2xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg disabled:shadow-none"
+                  aria-label="Send message"
                 >
-                  {loading ? <Loading size="sm" /> : <Send className="w-4 h-4" />}
-                </Button>
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5 text-white" />
+                  )}
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </>

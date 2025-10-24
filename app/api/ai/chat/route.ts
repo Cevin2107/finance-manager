@@ -9,7 +9,7 @@ import { openai, AI_MODEL, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
     const transactions = await Transaction.find({
-      userEmail: session.user.email,
+      userId: session.user.id,
       date: { $gte: threeMonthsAgo },
     })
       .sort({ date: -1 })
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       .lean();
 
     const budgets = await Budget.find({
-      userEmail: session.user.email,
+      userId: session.user.id,
     }).lean();
 
     // Tạo context từ dữ liệu tài chính

@@ -4,6 +4,7 @@ import { authOptions } from '@/auth';
 import dbConnect from '@/lib/db';
 import Budget from '@/models/Budget';
 import Transaction from '@/models/Transaction';
+import mongoose from 'mongoose';
 
 // GET - Lấy danh sách budgets
 export async function GET(req: NextRequest) {
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
         const spent = await Transaction.aggregate([
           {
             $match: {
-              userId: session.user.id,
+              userId: new mongoose.Types.ObjectId(session.user.id),
               type: 'expense',
               category: budget.category,
               date: {

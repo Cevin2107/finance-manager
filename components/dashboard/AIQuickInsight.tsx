@@ -54,13 +54,12 @@ export function AIQuickInsight() {
 
   if (loading) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ AI" />
+      <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full">
         <CardContent>
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-12">
             <Loading size="md" />
-            <span className="ml-3 text-gray-600 dark:text-gray-400">
-              Đang phân tích tài chính...
+            <span className="ml-3 text-gray-600 dark:text-gray-400 text-sm">
+              Đang phân tích...
             </span>
           </div>
         </CardContent>
@@ -70,13 +69,14 @@ export function AIQuickInsight() {
 
   if (error || !analysis?.stats) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ AI" />
+      <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full">
         <CardContent>
           <div className="text-center py-8">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <AlertCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            </div>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              {analysis?.summary || 'Chưa có giao dịch nào. Hãy thêm giao dịch để nhận insights từ AI!'}
+              {analysis?.summary || 'Chưa có giao dịch. Hãy thêm để nhận insights!'}
             </p>
           </div>
         </CardContent>
@@ -88,51 +88,62 @@ export function AIQuickInsight() {
   const periodText = analysis.period || '7 ngày qua';
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-      <CardHeader 
-        title={`${periodEmoji} AI Insights`} 
-        subtitle={`Phân tích ${periodText}`} 
-      />
+    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full border-2 border-purple-200 dark:border-purple-800">
       <CardContent>
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Thu nhập</span>
-            </div>
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-              {(analysis.stats.income / 1000000).toFixed(1)}M ₫
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100">
+              AI Insights
+            </h3>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {periodEmoji} {periodText}
             </p>
           </div>
-          <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-3">
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-3 border border-green-200 dark:border-green-800">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="w-4 h-4 text-red-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Chi tiêu</span>
+              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-xs text-gray-600 dark:text-gray-400">Thu</span>
             </div>
-            <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-              {(analysis.stats.expense / 1000000).toFixed(1)}M ₫
+            <p className="text-base font-bold text-gray-900 dark:text-gray-100">
+              {(analysis.stats.income / 1000000).toFixed(1)}M
+            </p>
+          </div>
+          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-3 border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <span className="text-xs text-gray-600 dark:text-gray-400">Chi</span>
+            </div>
+            <p className="text-base font-bold text-gray-900 dark:text-gray-100">
+              {(analysis.stats.expense / 1000000).toFixed(1)}M
             </p>
           </div>
         </div>
 
         {/* Income Stability Badge */}
         {analysis.incomeStability && (
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-4 ${
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-3 ${
             analysis.incomeStability.isStable
               ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
               : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
           }`}>
             {analysis.incomeStability.isStable ? '✓' : '⚠'} Thu nhập{' '}
-            {analysis.incomeStability.isStable ? 'ổn định' : 'không ổn định'}
+            {analysis.incomeStability.isStable ? 'ổn định' : 'biến động'}
           </div>
         )}
 
-        {/* AI Summary - Shortened version */}
+        {/* AI Summary - Shortened & styled */}
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <div className="text-sm text-gray-700 dark:text-gray-300 line-clamp-6">
+          <div className="text-xs text-gray-700 dark:text-gray-300 line-clamp-4 leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {analysis.summary.split('\n').slice(0, 8).join('\n')}
+              {analysis.summary.split('\n').slice(0, 6).join('\n')}
             </ReactMarkdown>
           </div>
         </div>
@@ -140,9 +151,9 @@ export function AIQuickInsight() {
         {/* View Full Analysis Link */}
         <a
           href="/dashboard/ai"
-          className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-3 font-medium"
+          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-3 font-semibold hover:gap-2 transition-all"
         >
-          Xem phân tích đầy đủ →
+          Xem đầy đủ →
         </a>
       </CardContent>
     </Card>
