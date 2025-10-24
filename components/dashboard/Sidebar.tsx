@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
@@ -15,6 +15,8 @@ import {
   User,
   Settings,
   ChevronDown,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -25,11 +27,137 @@ const navigation = [
   { name: 'Báo cáo', href: '/dashboard/reports', icon: BarChart3 },
 ];
 
+// Helper function to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [isLoadingNotification, setIsLoadingNotification] = useState(false);
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      const saved = localStorage.getItem('notificationsEnabled');
+      setNotificationsEnabled(saved === 'true' && Notification.permission === 'granted');
+    }
+  }, []);
+
+  const toggleNotifications = async () => {
+    if (!('Notification' in window)) {
+      alert('Trình duyệt của bạn không hỗ trợ thông báo');
+      return;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      alert('Trình duyệt của bạn không hỗ trợ Service Worker');
+      return;
+    }
+
+    setIsLoadingNotification(true);
+
+    try {
+      if (!notificationsEnabled) {
+        // Request permission first
+        const permission = await Notification.requestPermission();
+        
+        if (permission !== 'granted') {
+          alert('Bạn cần cho phép thông báo để sử dụng tính năng này');
+          setIsLoadingNotification(false);
+          return;
+        }
+
+        // Wait for service worker to be ready
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Check if push manager is available
+        if (!registration.pushManager) {
+          alert('Trình duyệt không hỗ trợ Push Notifications');
+          setIsLoadingNotification(false);
+          return;
+        }
+
+        // Subscribe to push notifications (simplified - no VAPID for now)
+        try {
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(
+              'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
+            )
+          });
+
+          // Save subscription
+          const response = await fetch('/api/notifications/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to save subscription');
+          }
+
+          localStorage.setItem('notificationsEnabled', 'true');
+          setNotificationsEnabled(true);
+          
+          // Show test notification
+          registration.showNotification('🎉 Thông báo đã bật!', {
+            body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7h sáng',
+            icon: '/image.png',
+            badge: '/image.png',
+          });
+        } catch (subError) {
+          console.error('Subscription error:', subError);
+          alert('Không thể đăng ký nhận thông báo. Vui lòng thử lại sau.');
+        }
+      } else {
+        // Disable notifications
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
+          
+          if (subscription) {
+            await subscription.unsubscribe();
+            
+            // Remove from backend
+            await fetch('/api/notifications/unsubscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: subscription.endpoint }),
+            });
+          }
+          
+          localStorage.setItem('notificationsEnabled', 'false');
+          setNotificationsEnabled(false);
+          
+          alert('✅ Đã tắt thông báo');
+        } catch (unsubError) {
+          console.error('Unsubscribe error:', unsubError);
+        }
+      }
+    } catch (error) {
+      console.error('Notification toggle error:', error);
+      alert('Có lỗi xảy ra: ' + (error as Error).message);
+    } finally {
+      setIsLoadingNotification(false);
+    }
+  };
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/login' });
@@ -155,6 +283,34 @@ export function Sidebar() {
                     <Settings size={18} />
                     <span className="text-sm">Cài đặt</span>
                   </Link>
+                  
+                  {/* Notification Toggle */}
+                  <button
+                    onClick={toggleNotifications}
+                    disabled={isLoadingNotification}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors border-t border-gray-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      {notificationsEnabled ? (
+                        <Bell size={18} className="text-blue-600" />
+                      ) : (
+                        <BellOff size={18} className="text-gray-400" />
+                      )}
+                      <span className="text-sm">
+                        {notificationsEnabled ? 'Tắt thông báo' : 'Bật thông báo'}
+                      </span>
+                    </div>
+                    <div className={clsx(
+                      'w-10 h-6 rounded-full p-1 transition-colors',
+                      notificationsEnabled ? 'bg-blue-600' : 'bg-gray-300',
+                      isLoadingNotification && 'opacity-50'
+                    )}>
+                      <div className={clsx(
+                        'w-4 h-4 rounded-full bg-white transition-transform',
+                        notificationsEnabled ? 'translate-x-4' : 'translate-x-0'
+                      )} />
+                    </div>
+                  </button>
                   
                   <button
                     onClick={handleSignOut}
