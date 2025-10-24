@@ -88,13 +88,36 @@ export async function POST(req: NextRequest) {
 
     await dbConnect();
 
+    // Parse date với timezone local
+    let transactionDate = new Date();
+    if (date) {
+      // Nếu date là yyyy-MM-dd (10 ký tự), thêm giờ hiện tại
+      if (date.length === 10) {
+        // Parse date string theo local timezone, không phải UTC
+        const [year, month, day] = date.split('-').map(Number);
+        const now = new Date();
+        transactionDate = new Date(
+          year,
+          month - 1, // JavaScript months are 0-indexed
+          day,
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+          now.getMilliseconds()
+        );
+      } else {
+        // Full datetime string được gửi lên
+        transactionDate = new Date(date);
+      }
+    }
+
     const transaction = await Transaction.create({
       userId: session.user.id,
       type,
       category,
       amount: parseFloat(amount),
       description: description || '',
-      date: date ? new Date(date) : new Date(),
+      date: transactionDate,
     });
 
     return NextResponse.json(

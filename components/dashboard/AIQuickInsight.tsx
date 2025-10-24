@@ -105,25 +105,12 @@ export function AIQuickInsight() {
           </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-3 border border-green-200 dark:border-green-800">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Thu</span>
-            </div>
-            <p className="text-base font-bold text-gray-900 dark:text-gray-100">
-              {(analysis.stats.income / 1000000).toFixed(1)}M
-            </p>
-          </div>
-          <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-3 border border-red-200 dark:border-red-800">
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <span className="text-xs text-gray-600 dark:text-gray-400">Chi</span>
-            </div>
-            <p className="text-base font-bold text-gray-900 dark:text-gray-100">
-              {(analysis.stats.expense / 1000000).toFixed(1)}M
-            </p>
+        {/* AI Summary - Nhận xét và lời khuyên */}
+        <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
+          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {analysis.summary}
+            </ReactMarkdown>
           </div>
         </div>
 
@@ -139,21 +126,12 @@ export function AIQuickInsight() {
           </div>
         )}
 
-        {/* AI Summary - Shortened & styled */}
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <div className="text-xs text-gray-700 dark:text-gray-300 line-clamp-4 leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {analysis.summary.split('\n').slice(0, 6).join('\n')}
-            </ReactMarkdown>
-          </div>
-        </div>
-
         {/* View Full Analysis Link */}
         <a
           href="/dashboard/ai"
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-3 font-semibold hover:gap-2 transition-all"
+          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold hover:gap-2 transition-all"
         >
-          Xem đầy đủ →
+          Xem phân tích chi tiết →
         </a>
       </CardContent>
     </Card>

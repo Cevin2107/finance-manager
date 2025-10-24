@@ -138,80 +138,91 @@ export function ReportsAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Báo cáo & Phân tích
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Phân tích chi tiết về tài chính của bạn
-          </p>
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]"></div>
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <TrendingUp className="w-7 h-7 text-white" />
+              </div>
+              Báo cáo & Phân tích
+            </h1>
+            <p className="text-orange-100 text-lg">
+              Phân tích chi tiết và xu hướng tài chính của bạn
+            </p>
+          </div>
+          <Select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            options={[
+              { value: '3months', label: '3 tháng' },
+              { value: '6months', label: '6 tháng' },
+              { value: '12months', label: '12 tháng' },
+            ]}
+            className="bg-white/20 backdrop-blur-md text-white border-white/30"
+          />
         </div>
-        <Select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          options={[
-            { value: '3months', label: '3 tháng' },
-            { value: '6months', label: '6 tháng' },
-            { value: '12months', label: '12 tháng' },
-          ]}
-        />
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card variant="gradient" hover>
+        <Card className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 opacity-10 group-hover:opacity-20 transition-opacity"></div>
           <CardContent>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tổng thu nhập</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Tổng thu nhập</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
               {totalIncome.toLocaleString('vi-VN')} ₫
             </p>
           </CardContent>
         </Card>
 
-        <Card variant="gradient" hover>
+        <Card className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-pink-500 opacity-10 group-hover:opacity-20 transition-opacity"></div>
           <CardContent>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingDown className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tổng chi tiêu</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Tổng chi tiêu</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-3xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
               {totalExpense.toLocaleString('vi-VN')} ₫
             </p>
           </CardContent>
         </Card>
 
-        <Card variant="gradient" hover>
+        <Card className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 opacity-10 group-hover:opacity-20 transition-opacity"></div>
           <CardContent>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <DollarSign className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tiết kiệm</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Tiết kiệm</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               {(totalIncome - totalExpense).toLocaleString('vi-VN')} ₫
             </p>
           </CardContent>
         </Card>
 
-        <Card variant="gradient" hover>
+        <Card className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-500 opacity-10 group-hover:opacity-20 transition-opacity"></div>
           <CardContent>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Tỷ lệ tiết kiệm</p>
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Tỷ lệ tiết kiệm</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               {savingsRate.toFixed(1)}%
             </p>
           </CardContent>

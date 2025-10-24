@@ -1,5 +1,5 @@
-import { BudgetManager } from '@/components/dashboard/BudgetManager';
+import { SavingsManager } from '@/components/dashboard/SavingsManager';
 
 export default function BudgetPage() {
-  return <BudgetManager />;
+  return <SavingsManager />;
 }

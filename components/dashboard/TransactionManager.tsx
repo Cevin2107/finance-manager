@@ -19,6 +19,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ChevronDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -97,6 +98,16 @@ export function TransactionManager() {
   // Sorting state
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Bulk delete state
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleteStart, setBulkDeleteStart] = useState('');
+  const [bulkDeleteEnd, setBulkDeleteEnd] = useState('');
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     type: 'expense' as 'income' | 'expense',
@@ -196,6 +207,67 @@ export function TransactionManager() {
     }
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType, sortBy, sortOrder]);
+
+  const handleBulkDelete = async () => {
+    if (!bulkDeleteStart || !bulkDeleteEnd) {
+      setError('Vui lòng chọn khoảng thời gian');
+      return;
+    }
+
+    const startDate = new Date(bulkDeleteStart);
+    const endDate = new Date(bulkDeleteEnd);
+
+    if (startDate > endDate) {
+      setError('Ngày bắt đầu phải trước ngày kết thúc');
+      return;
+    }
+
+    const transactionsToDelete = transactions.filter((t) => {
+      const tDate = new Date(t.date);
+      return tDate >= startDate && tDate <= endDate;
+    });
+
+    if (transactionsToDelete.length === 0) {
+      setError('Không có giao dịch nào trong khoảng thời gian này');
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc muốn xóa ${transactionsToDelete.length} giao dịch từ ${format(startDate, 'dd/MM/yyyy')} đến ${format(endDate, 'dd/MM/yyyy')}?`)) {
+      return;
+    }
+
+    setIsBulkDeleting(true);
+    try {
+      // Delete each transaction
+      await Promise.all(
+        transactionsToDelete.map((t) =>
+          fetch(`/api/transactions?id=${t._id}`, { method: 'DELETE' })
+        )
+      );
+
+      setSuccess(`Đã xóa ${transactionsToDelete.length} giao dịch thành công!`);
+      fetchTransactions();
+      window.dispatchEvent(new Event('transactionAdded'));
+      setShowBulkDelete(false);
+      setBulkDeleteStart('');
+      setBulkDeleteEnd('');
+    } catch (err: any) {
+      setError(err.message || 'Không thể xóa giao dịch');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -278,13 +350,41 @@ export function TransactionManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      {/* Header with gradient background */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]"></div>
+        <div className="relative">
+          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <TrendingUp className="w-7 h-7 text-white" />
+            </div>
             Quản lý giao dịch
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Theo dõi và quản lý các giao dịch của bạn</p>
+          <p className="text-blue-100 text-lg">
+            Theo dõi và quản lý các giao dịch thu nhập & chi tiêu của bạn
+          </p>
+          
+          {/* Quick Stats */}
+          {transactions.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                <p className="text-blue-100 text-sm mb-1">Tổng giao dịch</p>
+                <p className="text-3xl font-bold text-white">{transactions.length}</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                <p className="text-blue-100 text-sm mb-1">Thu nhập</p>
+                <p className="text-3xl font-bold text-white">
+                  {transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                <p className="text-blue-100 text-sm mb-1">Chi tiêu</p>
+                <p className="text-3xl font-bold text-white">
+                  {transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -493,7 +593,7 @@ export function TransactionManager() {
       <Card>
         <CardContent>
           <div className="space-y-3">
-            {filteredTransactions.map((transaction) => (
+            {paginatedTransactions.map((transaction) => (
               <div 
                 key={transaction._id} 
                 className="group relative flex items-center justify-between p-5 bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl border-2 border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200"
@@ -564,6 +664,176 @@ export function TransactionManager() {
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {filteredTransactions.length > 0 && (
+            <div className="mt-6 flex items-center justify-between border-t pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Hiển thị:</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  options={[
+                    { value: '5', label: '5 giao dịch' },
+                    { value: '10', label: '10 giao dịch' },
+                    { value: '20', label: '20 giao dịch' },
+                    { value: '50', label: '50 giao dịch' },
+                  ]}
+                  className="w-auto"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} / {filteredTransactions.length}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Trước
+                </Button>
+                
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      // Show first, last, current, and adjacent pages
+                      return (
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1
+                      );
+                    })
+                    .map((page, idx, arr) => {
+                      // Add ellipsis
+                      const prevPage = arr[idx - 1];
+                      const showEllipsis = prevPage && page - prevPage > 1;
+
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {showEllipsis && (
+                            <span className="px-2 text-gray-400">...</span>
+                          )}
+                          <button
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                              currentPage === page
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bulk Delete Section */}
+      <Card className="bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-800">
+        <CardContent>
+          <button
+            onClick={() => setShowBulkDelete(!showBulkDelete)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Trash2 size={20} className="text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                  Xóa nhiều giao dịch
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Xóa tất cả giao dịch trong khoảng thời gian
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              size={20}
+              className={`transition-transform ${showBulkDelete ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showBulkDelete && (
+            <div className="mt-4 space-y-4 pt-4 border-t border-red-200 dark:border-red-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Từ ngày
+                  </label>
+                  <Input
+                    type="date"
+                    value={bulkDeleteStart}
+                    onChange={(e) => setBulkDeleteStart(e.target.value)}
+                    className="border-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    Đến ngày
+                  </label>
+                  <Input
+                    type="date"
+                    value={bulkDeleteEnd}
+                    onChange={(e) => setBulkDeleteEnd(e.target.value)}
+                    className="border-2"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="danger"
+                  onClick={handleBulkDelete}
+                  isLoading={isBulkDeleting}
+                  className="flex-1"
+                >
+                  <Trash2 size={18} className="mr-2" />
+                  Xóa giao dịch trong khoảng này
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowBulkDelete(false);
+                    setBulkDeleteStart('');
+                    setBulkDeleteEnd('');
+                  }}
+                >
+                  Hủy
+                </Button>
+              </div>
+
+              {bulkDeleteStart && bulkDeleteEnd && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Sẽ xóa {transactions.filter((t) => {
+                    const tDate = new Date(t.date);
+                    return tDate >= new Date(bulkDeleteStart) && tDate <= new Date(bulkDeleteEnd);
+                  }).length} giao dịch
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

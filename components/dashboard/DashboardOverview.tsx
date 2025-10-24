@@ -4,16 +4,35 @@ import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
 import { AIQuickInsight } from '@/components/dashboard/AIQuickInsight';
+import { QuickTransaction } from '@/components/dashboard/QuickTransaction';
 import {
   TrendingUp,
   TrendingDown,
   Wallet,
-  DollarSign,
-  ArrowUpCircle,
-  ArrowDownCircle,
+  Sparkles,
+  Calendar,
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format } from 'date-fns';
+import { 
+  AreaChart, 
+  Area,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+import { 
+  format, 
+  startOfWeek, 
+  endOfWeek, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  eachWeekOfInterval, 
+  eachMonthOfInterval 
+} from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface Transaction {
   _id: string;
@@ -33,6 +52,8 @@ interface Stats {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
+type ChartPeriod = 'week' | 'month' | 'year';
+
 export function DashboardOverview() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -42,6 +63,9 @@ export function DashboardOverview() {
     transactionCount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('week');
 
   useEffect(() => {
     fetchData();
@@ -80,39 +104,54 @@ export function DashboardOverview() {
     });
   };
 
-  // Prepare chart data
-  const categoryData = transactions.reduce((acc: any, t) => {
-    if (t.type === 'expense') {
-      const existing = acc.find((item: any) => item.name === t.category);
-      if (existing) {
-        existing.value += t.amount;
-      } else {
-        acc.push({ name: t.category, value: t.amount });
-      }
-    }
-    return acc;
-  }, []);
+  // Generate chart data based on selected period
+  const getChartData = () => {
+    const now = new Date();
+    let intervals: Date[] = [];
+    let labelFormat: (date: Date) => string;
 
-  // Income vs Expense by month
-  const monthlyData = transactions.reduce((acc: any, t) => {
-    const month = format(new Date(t.date), 'MMM yyyy');
-    const existing = acc.find((item: any) => item.month === month);
-    
-    if (existing) {
-      if (t.type === 'income') {
-        existing.income += t.amount;
-      } else {
-        existing.expense += t.amount;
-      }
+    if (chartPeriod === 'week') {
+      const start = startOfWeek(now, { locale: vi });
+      const end = endOfWeek(now, { locale: vi });
+      intervals = eachDayOfInterval({ start, end });
+      labelFormat = (date) => format(date, 'EEE', { locale: vi });
+    } else if (chartPeriod === 'month') {
+      const start = startOfMonth(now);
+      const end = endOfMonth(now);
+      intervals = eachDayOfInterval({ start, end });
+      labelFormat = (date) => format(date, 'd'); // Chỉ hiển thị ngày (1, 2, 3...)
     } else {
-      acc.push({
-        month,
-        income: t.type === 'income' ? t.amount : 0,
-        expense: t.type === 'expense' ? t.amount : 0,
-      });
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = new Date(now.getFullYear(), 11, 31);
+      intervals = eachMonthOfInterval({ start, end });
+      labelFormat = (date) => format(date, 'MMM', { locale: vi });
     }
-    return acc;
-  }, []);
+
+    return intervals.map((interval) => {
+      const relevantTransactions = transactions.filter((t) => {
+        const tDate = new Date(t.date);
+        if (chartPeriod === 'week' || chartPeriod === 'month') {
+          return format(tDate, 'yyyy-MM-dd') === format(interval, 'yyyy-MM-dd');
+        } else {
+          return tDate.getMonth() === interval.getMonth();
+        }
+      });
+
+      const income = relevantTransactions
+        .filter((t) => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const expense = relevantTransactions
+        .filter((t) => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      return {
+        label: labelFormat(interval),
+        income,
+        expense,
+      };
+    });
+  };
 
   if (isLoading) {
     return <Loading fullScreen text="Đang tải dữ liệu..." />;
@@ -134,78 +173,66 @@ export function DashboardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left side: Stats Cards (2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Stats Cards */}
+          {/* Stats Cards - Gradient Design */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card variant="gradient" hover>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Tổng thu nhập
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.totalIncome.toLocaleString('vi-VN')} ₫
-                    </h3>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                    <ArrowUpCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  </div>
+            <Card className="p-6 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-green-100 mb-2 font-medium">Tổng Thu Nhập</p>
+                  <h3 className="text-3xl font-bold tracking-tight">
+                    {stats.totalIncome.toLocaleString('vi-VN')} ₫
+                  </h3>
                 </div>
-              </CardContent>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </Card>
 
-            <Card variant="gradient" hover>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Tổng chi tiêu
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.totalExpense.toLocaleString('vi-VN')} ₫
-                    </h3>
-                  </div>
-                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                    <ArrowDownCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                  </div>
+            <Card className="p-6 bg-gradient-to-br from-red-500 via-rose-600 to-pink-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-red-100 mb-2 font-medium">Tổng Chi Tiêu</p>
+                  <h3 className="text-3xl font-bold tracking-tight">
+                    {stats.totalExpense.toLocaleString('vi-VN')} ₫
+                  </h3>
                 </div>
-              </CardContent>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                  <TrendingDown className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </Card>
 
-            <Card variant="gradient" hover>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Số dư
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.balance.toLocaleString('vi-VN')} ₫
-                    </h3>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <Wallet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
+            <Card className={`p-6 bg-gradient-to-br ${
+              stats.balance >= 0 
+                ? 'from-blue-500 via-indigo-600 to-purple-600' 
+                : 'from-orange-500 via-red-600 to-rose-600'
+            } text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300`}>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-blue-100 mb-2 font-medium">Số Dư</p>
+                  <h3 className="text-3xl font-bold tracking-tight">
+                    {stats.balance.toLocaleString('vi-VN')} ₫
+                  </h3>
                 </div>
-              </CardContent>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                  <Wallet className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </Card>
 
-            <Card variant="gradient" hover>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      Giao dịch
-                    </p>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                      {stats.transactionCount}
-                    </h3>
-                  </div>
-                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                  </div>
+            <Card className="p-6 bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-purple-100 mb-2 font-medium">Giao Dịch</p>
+                  <h3 className="text-3xl font-bold tracking-tight">
+                    {stats.transactionCount}
+                  </h3>
                 </div>
-              </CardContent>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+              </div>
             </Card>
           </div>
         </div>
@@ -216,52 +243,108 @@ export function DashboardOverview() {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Income vs Expense Chart */}
-        <Card>
-          <CardHeader title="Thu nhập & Chi tiêu" subtitle="Theo tháng" />
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value: any) => `${value.toLocaleString('vi-VN')} ₫`} />
-                <Legend />
-                <Bar dataKey="income" fill="#10B981" name="Thu nhập" />
-                <Bar dataKey="expense" fill="#EF4444" name="Chi tiêu" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Modern AreaChart with Period Selector */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Biểu đồ tài chính
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Thu nhập & Chi tiêu theo thời gian
+            </p>
+          </div>
+          
+          {/* Period Selector */}
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            <button
+              onClick={() => setChartPeriod('week')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                chartPeriod === 'week'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <Calendar className="w-4 h-4 inline-block mr-1" />
+              Tuần
+            </button>
+            <button
+              onClick={() => setChartPeriod('month')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                chartPeriod === 'month'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <Calendar className="w-4 h-4 inline-block mr-1" />
+              Tháng
+            </button>
+            <button
+              onClick={() => setChartPeriod('year')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                chartPeriod === 'year'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              <Calendar className="w-4 h-4 inline-block mr-1" />
+              Năm
+            </button>
+          </div>
+        </div>
 
-        {/* Expense by Category */}
-        <Card>
-          <CardHeader title="Chi tiêu theo danh mục" />
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: any) => `${value.toLocaleString('vi-VN')} ₫`} />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+        <ResponsiveContainer width="100%" height={400}>
+          <AreaChart data={getChartData()}>
+            <defs>
+              <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
+              </linearGradient>
+              <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#EF4444" stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis 
+              dataKey="label" 
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis 
+              stroke="#6b7280"
+              style={{ fontSize: '12px' }}
+              tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+            />
+            <Tooltip 
+              formatter={(value: any) => `${value.toLocaleString('vi-VN')} ₫`}
+              contentStyle={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+              }}
+            />
+            <Legend />
+            <Area 
+              type="monotone" 
+              dataKey="income" 
+              stroke="#10B981" 
+              strokeWidth={2}
+              fill="url(#incomeGradient)" 
+              name="Thu nhập"
+            />
+            <Area 
+              type="monotone" 
+              dataKey="expense" 
+              stroke="#EF4444" 
+              strokeWidth={2}
+              fill="url(#expenseGradient)" 
+              name="Chi tiêu"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </Card>
 
       {/* Recent Transactions */}
       <Card>

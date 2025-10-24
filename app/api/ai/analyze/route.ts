@@ -107,47 +107,27 @@ export async function POST(req: NextRequest) {
     const balance = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : '0.0';
 
-    // Tạo prompt cho AI phân tích
+    // Tạo prompt cho AI phân tích - NGẮN GỌN CHỈ 3 CÂU
     const analysisPrompt = `
-Phân tích tài chính chi tiết cho người dùng dựa trên dữ liệu ${periodLabel}:
+Phân tích tài chính ${periodLabel}:
 
-📊 TỔNG QUAN (${periodLabel.toUpperCase()}):
-- Tổng thu nhập: ${totalIncome.toLocaleString('vi-VN')} VNĐ
-- Tổng chi tiêu: ${totalExpense.toLocaleString('vi-VN')} VNĐ
+📊 Dữ liệu:
+- Thu nhập: ${totalIncome.toLocaleString('vi-VN')} VNĐ
+- Chi tiêu: ${totalExpense.toLocaleString('vi-VN')} VNĐ
 - Số dư: ${balance.toLocaleString('vi-VN')} VNĐ
 - Tỷ lệ tiết kiệm: ${savingsRate}%
-- Số giao dịch: ${transactions.length}
 
-📈 CHI TIẾT GIAO DỊCH:
-${Object.entries(dailyData)
-  .slice(0, 10) // Giới hạn 10 ngày để không quá dài
-  .map(
-    ([date, data]) =>
-      `${date}: Thu ${data.income.toLocaleString('vi-VN')} | Chi ${data.expense.toLocaleString(
-        'vi-VN'
-      )} | Còn ${data.balance.toLocaleString('vi-VN')} VNĐ`
-  )
+� Top chi tiêu:
+${topExpenseCategories.slice(0, 3)
+  .map((cat) => `- ${cat.category}: ${cat.amount.toLocaleString('vi-VN')} VNĐ`)
   .join('\n')}
 
-${incomeTransactions.length >= 2 ? `💰 ĐỘ ỔN ĐỊNH THU NHẬP:
-- Độ biến động: ${incomeStability.toFixed(1)}% ${isStable ? '(Ổn định)' : '(KHÔNG ỔN ĐỊNH)'}
-` : ''}
+Hãy đưa ra nhận xét CỰC NGẮN GỌN chỉ trong 3 câu:
+1. Đánh giá tình hình tài chính (1 câu)
+2. Nhận xét về chi tiêu nổi bật (1 câu)
+3. Lời khuyên ngắn gọn nhất (1 câu)
 
-🛒 TOP DANH MỤC CHI TIÊU:
-${topExpenseCategories.length > 0 
-  ? topExpenseCategories
-      .map((cat, i) => `${i + 1}. ${cat.category}: ${cat.amount.toLocaleString('vi-VN')} VNĐ`)
-      .join('\n')
-  : 'Chưa có chi tiêu nào'}
-
-Hãy phân tích ngắn gọn và đưa ra:
-1. 📊 Đánh giá tổng quan tình hình tài chính ${periodLabel}
-2. ${incomeTransactions.length >= 2 ? '💹 Nhận xét về độ ổn định thu nhập\n3. ' : ''}💸 Nhận xét về chi tiêu (có gì cần lưu ý không)
-${incomeTransactions.length >= 2 ? '4.' : '3.'} 🎯 2-3 khuyến nghị cụ thể để cải thiện
-
-${analysisMode === 'weekly' ? 'Lưu ý: Đây là phân tích theo tuần. Vào ngày đầu tháng sẽ có phân tích tổng kết theo tháng.' : 'Lưu ý: Đây là phân tích tổng kết tháng.'}
-
-Trả lời ngắn gọn bằng tiếng Việt, có cấu trúc rõ ràng với emoji và markdown.
+Trả lời bằng tiếng Việt, không dùng markdown phức tạp, chỉ text thuần túy có emoji.
 `;
 
     const completion = await openai.chat.completions.create({
@@ -155,7 +135,7 @@ Trả lời ngắn gọn bằng tiếng Việt, có cấu trúc rõ ràng với 
       messages: [
         {
           role: 'system' as const,
-          content: FINANCIAL_ADVISOR_PROMPT,
+          content: 'Bạn là cố vấn tài chính. Trả lời CỰC NGẮN GỌN, chỉ 3 câu, dễ hiểu.',
         },
         {
           role: 'user' as const,
@@ -163,7 +143,7 @@ Trả lời ngắn gọn bằng tiếng Việt, có cấu trúc rõ ràng với 
         },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
+      max_tokens: 200, // Giảm từ 1500 xuống 200 để ngắn hơn
     });
 
     const aiSummary = completion.choices[0]?.message?.content || 
