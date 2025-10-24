@@ -14,61 +14,89 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    // Lấy dữ liệu 6 tháng gần nhất
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    // Xác định period phân tích: tuần hoặc tháng
+    const today = new Date();
+    const dayOfMonth = today.getDate();
+    const isFirstDayOfMonth = dayOfMonth === 1;
+    
+    // Nếu là ngày đầu tháng thì phân tích theo tháng, còn không thì theo tuần
+    const analysisMode = isFirstDayOfMonth ? 'monthly' : 'weekly';
+    
+    let startDate: Date;
+    let periodLabel: string;
+    
+    if (analysisMode === 'monthly') {
+      // Phân tích tháng trước
+      startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      periodLabel = 'tháng trước';
+    } else {
+      // Phân tích 7 ngày gần nhất
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+      periodLabel = '7 ngày qua';
+    }
 
     const transactions = await Transaction.find({
       userEmail: session.user.email,
-      date: { $gte: sixMonthsAgo },
+      date: { $gte: startDate },
     })
       .sort({ date: -1 })
       .lean();
 
     if (transactions.length === 0) {
       return NextResponse.json({
-        summary: 'Chưa có đủ dữ liệu để phân tích. Hãy thêm giao dịch để nhận được insights từ AI.',
-        stats: null,
+        summary: `Chưa có giao dịch nào trong ${periodLabel}. Hãy thêm giao dịch để nhận được insights từ AI!`,
+        stats: {
+          income: 0,
+          expense: 0,
+          balance: 0,
+          savingsRate: '0.0',
+        },
         topExpenseCategories: [],
+        period: periodLabel,
       });
     }
 
     // Tính toán thống kê chi tiết
-    const monthlyData: Record<string, { income: number; expense: number; balance: number }> = {};
+    const dailyData: Record<string, { income: number; expense: number; balance: number }> = {};
     const categoryExpenses: Record<string, number> = {};
     let totalIncome = 0;
     let totalExpense = 0;
 
     transactions.forEach((t) => {
-      const monthKey = new Date(t.date).toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-      });
+      const dateKey = new Date(t.date).toLocaleDateString('vi-VN');
 
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expense: 0, balance: 0 };
+      if (!dailyData[dateKey]) {
+        dailyData[dateKey] = { income: 0, expense: 0, balance: 0 };
       }
 
       if (t.type === 'income') {
-        monthlyData[monthKey].income += t.amount;
+        dailyData[dateKey].income += t.amount;
         totalIncome += t.amount;
       } else {
-        monthlyData[monthKey].expense += t.amount;
+        dailyData[dateKey].expense += t.amount;
         totalExpense += t.amount;
         categoryExpenses[t.category] = (categoryExpenses[t.category] || 0) + t.amount;
       }
 
-      monthlyData[monthKey].balance = monthlyData[monthKey].income - monthlyData[monthKey].expense;
+      dailyData[dateKey].balance = dailyData[dateKey].income - dailyData[dateKey].expense;
     });
 
-    // Phân tích độ ổn định thu nhập
-    const monthlyIncomes = Object.values(monthlyData).map((m) => m.income);
-    const avgIncome = monthlyIncomes.reduce((a, b) => a + b, 0) / monthlyIncomes.length;
-    const incomeVariance =
-      monthlyIncomes.reduce((sum, income) => sum + Math.pow(income - avgIncome, 2), 0) /
-      monthlyIncomes.length;
-    const incomeStdDev = Math.sqrt(incomeVariance);
-    const incomeStability = avgIncome > 0 ? (incomeStdDev / avgIncome) * 100 : 0;
+    // Phân tích độ ổn định thu nhập (chỉ khi có ít nhất 2 giao dịch thu nhập)
+    const incomeTransactions = transactions.filter(t => t.type === 'income');
+    let incomeStability = 0;
+    let isStable = true;
+    
+    if (incomeTransactions.length >= 2) {
+      const incomeAmounts = incomeTransactions.map(t => t.amount);
+      const avgIncome = incomeAmounts.reduce((a, b) => a + b, 0) / incomeAmounts.length;
+      const incomeVariance =
+        incomeAmounts.reduce((sum, income) => sum + Math.pow(income - avgIncome, 2), 0) /
+        incomeAmounts.length;
+      const incomeStdDev = Math.sqrt(incomeVariance);
+      incomeStability = avgIncome > 0 ? (incomeStdDev / avgIncome) * 100 : 0;
+      isStable = incomeStability <= 20;
+    }
 
     // Top danh mục chi tiêu
     const topExpenseCategories = Object.entries(categoryExpenses)
@@ -76,47 +104,50 @@ export async function POST(req: NextRequest) {
       .slice(0, 5)
       .map(([category, amount]) => ({ category, amount }));
 
-    const avgExpense = totalExpense / Object.keys(monthlyData).length;
     const balance = totalIncome - totalExpense;
     const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : '0.0';
 
     // Tạo prompt cho AI phân tích
     const analysisPrompt = `
-Phân tích tài chính chi tiết cho người dùng dựa trên dữ liệu 6 tháng gần nhất:
+Phân tích tài chính chi tiết cho người dùng dựa trên dữ liệu ${periodLabel}:
 
-📊 TỔNG QUAN:
+📊 TỔNG QUAN (${periodLabel.toUpperCase()}):
 - Tổng thu nhập: ${totalIncome.toLocaleString('vi-VN')} VNĐ
 - Tổng chi tiêu: ${totalExpense.toLocaleString('vi-VN')} VNĐ
 - Số dư: ${balance.toLocaleString('vi-VN')} VNĐ
 - Tỷ lệ tiết kiệm: ${savingsRate}%
+- Số giao dịch: ${transactions.length}
 
-📈 PHÂN TÍCH THEO THÁNG:
-${Object.entries(monthlyData)
+📈 CHI TIẾT GIAO DỊCH:
+${Object.entries(dailyData)
+  .slice(0, 10) // Giới hạn 10 ngày để không quá dài
   .map(
-    ([month, data]) =>
-      `${month}: Thu ${data.income.toLocaleString('vi-VN')} VNĐ | Chi ${data.expense.toLocaleString(
+    ([date, data]) =>
+      `${date}: Thu ${data.income.toLocaleString('vi-VN')} | Chi ${data.expense.toLocaleString(
         'vi-VN'
-      )} VNĐ | Còn ${data.balance.toLocaleString('vi-VN')} VNĐ`
+      )} | Còn ${data.balance.toLocaleString('vi-VN')} VNĐ`
   )
   .join('\n')}
 
-💰 ĐỘ ỔN ĐỊNH THU NHẬP:
-- Thu nhập trung bình/tháng: ${avgIncome.toLocaleString('vi-VN')} VNĐ
-- Độ biến động: ${incomeStability.toFixed(1)}% ${incomeStability > 20 ? '(KHÔNG ỔN ĐỊNH)' : '(Ổn định)'}
+${incomeTransactions.length >= 2 ? `💰 ĐỘ ỔN ĐỊNH THU NHẬP:
+- Độ biến động: ${incomeStability.toFixed(1)}% ${isStable ? '(Ổn định)' : '(KHÔNG ỔN ĐỊNH)'}
+` : ''}
 
 🛒 TOP DANH MỤC CHI TIÊU:
-${topExpenseCategories
-  .map((cat, i) => `${i + 1}. ${cat.category}: ${cat.amount.toLocaleString('vi-VN')} VNĐ`)
-  .join('\n')}
+${topExpenseCategories.length > 0 
+  ? topExpenseCategories
+      .map((cat, i) => `${i + 1}. ${cat.category}: ${cat.amount.toLocaleString('vi-VN')} VNĐ`)
+      .join('\n')
+  : 'Chưa có chi tiêu nào'}
 
-Hãy phân tích chi tiết và đưa ra:
-1. 📊 Đánh giá tổng quan tình hình tài chính
-2. 💹 Phân tích độ ổn định thu nhập (có ổn định hay không)
-3. 💸 Nhận xét về chi tiêu (hợp lý hay cần cải thiện ở đâu)
-4. 💰 Khả năng tiết kiệm hiện tại
-5. 🎯 3-5 khuyến nghị cụ thể để cải thiện tài chính
+Hãy phân tích ngắn gọn và đưa ra:
+1. 📊 Đánh giá tổng quan tình hình tài chính ${periodLabel}
+2. ${incomeTransactions.length >= 2 ? '💹 Nhận xét về độ ổn định thu nhập\n3. ' : ''}💸 Nhận xét về chi tiêu (có gì cần lưu ý không)
+${incomeTransactions.length >= 2 ? '4.' : '3.'} 🎯 2-3 khuyến nghị cụ thể để cải thiện
 
-Trả lời bằng tiếng Việt, có cấu trúc rõ ràng với các emoji và markdown formatting.
+${analysisMode === 'weekly' ? 'Lưu ý: Đây là phân tích theo tuần. Vào ngày đầu tháng sẽ có phân tích tổng kết theo tháng.' : 'Lưu ý: Đây là phân tích tổng kết tháng.'}
+
+Trả lời ngắn gọn bằng tiếng Việt, có cấu trúc rõ ràng với emoji và markdown.
 `;
 
     const completion = await openai.chat.completions.create({
@@ -132,7 +163,7 @@ Trả lời bằng tiếng Việt, có cấu trúc rõ ràng với các emoji v�
         },
       ],
       temperature: 0.7,
-      max_tokens: 2000,
+      max_tokens: 1500,
     });
 
     const aiSummary = completion.choices[0]?.message?.content || 
@@ -147,10 +178,12 @@ Trả lời bằng tiếng Việt, có cấu trúc rõ ràng với các emoji v�
         savingsRate,
       },
       topExpenseCategories,
-      incomeStability: {
-        isStable: incomeStability <= 20,
+      incomeStability: incomeTransactions.length >= 2 ? {
+        isStable,
         variancePercent: incomeStability.toFixed(1),
-      },
+      } : undefined,
+      period: periodLabel,
+      analysisMode,
     });
   } catch (error: any) {
     console.error('AI Analysis error:', error);

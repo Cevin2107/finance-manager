@@ -34,6 +34,8 @@ interface AnalysisData {
     isStable: boolean;
     variancePercent: string;
   };
+  period?: string;
+  analysisMode?: 'weekly' | 'monthly';
 }
 
 export function AIFinancialAnalysis() {
@@ -73,10 +75,10 @@ export function AIFinancialAnalysis() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Phân tích tài chính bằng AI
+                {analysis?.analysisMode === 'monthly' ? '📅' : '📊'} Phân tích tài chính bằng AI
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Phân tích chi tiết 6 tháng giao dịch của bạn với AI
+                {analysis ? `Phân tích ${analysis.period || '7 ngày qua'}` : 'Phân tích chi tiết tài chính của bạn với AI'}
               </p>
             </div>
             <Button
@@ -93,7 +95,7 @@ export function AIFinancialAnalysis() {
               ) : (
                 <>
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Phân tích ngay
+                  {analysis ? 'Phân tích lại' : 'Phân tích ngay'}
                 </>
               )}
             </Button>

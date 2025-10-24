@@ -19,6 +19,8 @@ interface QuickAnalysis {
     isStable: boolean;
     variancePercent: string;
   };
+  period?: string;
+  analysisMode?: 'weekly' | 'monthly';
 }
 
 export function AIQuickInsight() {
@@ -53,7 +55,7 @@ export function AIQuickInsight() {
   if (loading) {
     return (
       <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ ChatGPT" />
+        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ AI" />
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loading size="md" />
@@ -69,14 +71,12 @@ export function AIQuickInsight() {
   if (error || !analysis?.stats) {
     return (
       <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ ChatGPT" />
+        <CardHeader title="AI Insights" subtitle="Phân tích tự động từ AI" />
         <CardContent>
           <div className="text-center py-8">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Chưa có đủ dữ liệu để phân tích.
-              <br />
-              Hãy thêm giao dịch để nhận insights từ AI!
+              {analysis?.summary || 'Chưa có giao dịch nào. Hãy thêm giao dịch để nhận insights từ AI!'}
             </p>
           </div>
         </CardContent>
@@ -84,9 +84,15 @@ export function AIQuickInsight() {
     );
   }
 
+  const periodEmoji = analysis.analysisMode === 'monthly' ? '📅' : '📊';
+  const periodText = analysis.period || '7 ngày qua';
+
   return (
     <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-      <CardHeader title="AI Insights" subtitle="Phân tích tự động từ ChatGPT" />
+      <CardHeader 
+        title={`${periodEmoji} AI Insights`} 
+        subtitle={`Phân tích ${periodText}`} 
+      />
       <CardContent>
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4">
