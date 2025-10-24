@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
@@ -36,6 +37,7 @@ interface AnalysisData {
 }
 
 export function AIFinancialAnalysis() {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [error, setError] = useState('');
@@ -100,7 +102,7 @@ export function AIFinancialAnalysis() {
       </Card>
 
       {error && (
-        <Alert variant="error">
+        <Alert>
           <AlertCircle className="w-4 h-4" />
           <span>{error}</span>
         </Alert>
@@ -112,7 +114,7 @@ export function AIFinancialAnalysis() {
             <div className="text-center py-12">
               <BarChart3 className="w-16 h-16 text-blue-600 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Sẵn sàng nhận insights từ AI?
+                Xin chào{session?.user?.name ? ` ${session.user.name}` : ''}! Sẵn sàng nhận insights từ AI?
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 AI sẽ phân tích giao dịch của bạn và đưa ra những lời khuyên cá nhân hóa
@@ -233,14 +235,7 @@ export function AIFinancialAnalysis() {
 
           {/* AI Analysis */}
           <Card>
-            <CardHeader
-              title={
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-yellow-500" />
-                  <span>Phân tích chi tiết từ AI</span>
-                </div>
-              }
-            />
+            <CardHeader title="Phân tích chi tiết từ AI" />
             <CardContent>
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>

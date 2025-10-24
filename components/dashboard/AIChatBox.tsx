@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +18,7 @@ interface Message {
 }
 
 export function AIChatBox() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -75,23 +77,23 @@ export function AIChatBox() {
     <div className="space-y-4">
       <Card className="h-[600px] flex flex-col">
         <CardHeader
-          title={
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-500" />
-              <span>Chat với AI Assistant</span>
-            </div>
-          }
+          title="Chat với AI Assistant"
           subtitle="Hỏi bất cứ điều gì về tài chính của bạn"
         />
 
         <CardContent className="flex-1 flex flex-col overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-4 px-2">
             {messages.length === 0 ? (
               <div className="text-center py-8">
-                <Bot className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Xin chào! Tôi là trợ lý AI tài chính của bạn.
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Bot className="w-8 h-8 text-white" />
+                </div>
+                <p className="text-gray-800 dark:text-gray-200 mb-2 text-lg font-semibold">
+                  Xin chào{session?.user?.name ? ` ${session.user.name}` : ''}! 👋
+                </p>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Tôi là trợ lý AI tài chính của bạn.
                   <br />
                   Hãy hỏi tôi về tài chính, thu nhập, chi tiêu nhé!
                 </p>
@@ -100,8 +102,9 @@ export function AIChatBox() {
                     <button
                       key={i}
                       onClick={() => handleSend(q)}
-                      className="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                      className="text-sm px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 hover:from-blue-100 hover:to-purple-100 dark:hover:from-gray-600 dark:hover:to-gray-500 rounded-xl text-left transition-all duration-200 border border-blue-100 dark:border-gray-600 hover:shadow-md"
                     >
+                      <Sparkles className="w-3 h-3 inline-block mr-1 text-purple-500" />
                       {q}
                     </button>
                   ))}
@@ -116,10 +119,10 @@ export function AIChatBox() {
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
                       msg.role === 'user'
-                        ? 'bg-blue-600'
-                        : 'bg-gradient-to-br from-yellow-500 to-orange-500'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600'
+                        : 'bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500'
                     }`}
                   >
                     {msg.role === 'user' ? (
@@ -134,23 +137,23 @@ export function AIChatBox() {
                     }`}
                   >
                     <div
-                      className={`inline-block px-4 py-2 rounded-2xl ${
+                      className={`inline-block px-4 py-3 rounded-2xl shadow-sm ${
                         msg.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm'
+                          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-tl-sm'
                       }`}
                     >
                       {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {msg.content}
                           </ReactMarkdown>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 px-1">
                       {msg.timestamp.toLocaleTimeString('vi-VN', {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -163,14 +166,14 @@ export function AIChatBox() {
 
             {loading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-2xl">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm">
                   <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce animation-delay-200" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce animation-delay-400" />
+                    <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-2 h-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
                   </div>
                 </div>
               </div>
@@ -178,7 +181,7 @@ export function AIChatBox() {
           </div>
 
           {error && (
-            <Alert variant="error" className="mb-4">
+            <Alert className="mb-4">
               <AlertCircle className="w-4 h-4" />
               <span>{error}</span>
             </Alert>

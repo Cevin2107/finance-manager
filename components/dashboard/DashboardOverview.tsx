@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Loading } from '@/components/ui/Loading';
+import { AIQuickInsight } from '@/components/dashboard/AIQuickInsight';
 import {
   TrendingUp,
   TrendingDown,
@@ -129,79 +130,90 @@ export function DashboardOverview() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card variant="gradient" hover>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Tổng thu nhập
-                </p>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {stats.totalIncome.toLocaleString('vi-VN')} ₫
-                </h3>
-              </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                <ArrowUpCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Layout: Stats + AI Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left side: Stats Cards (2/3 width) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card variant="gradient" hover>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Tổng thu nhập
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {stats.totalIncome.toLocaleString('vi-VN')} ₫
+                    </h3>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <ArrowUpCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card variant="gradient" hover>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Tổng chi tiêu
-                </p>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {stats.totalExpense.toLocaleString('vi-VN')} ₫
-                </h3>
-              </div>
-              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
-                <ArrowDownCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card variant="gradient" hover>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Tổng chi tiêu
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {stats.totalExpense.toLocaleString('vi-VN')} ₫
+                    </h3>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <ArrowDownCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card variant="gradient" hover>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Số dư
-                </p>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {stats.balance.toLocaleString('vi-VN')} ₫
-                </h3>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card variant="gradient" hover>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Số dư
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {stats.balance.toLocaleString('vi-VN')} ₫
+                    </h3>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <Wallet className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card variant="gradient" hover>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  Giao dịch
-                </p>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {stats.transactionCount}
-                </h3>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            <Card variant="gradient" hover>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                      Giao dịch
+                    </p>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {stats.transactionCount}
+                    </h3>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Right side: AI Insights (1/3 width) */}
+        <div className="lg:col-span-1">
+          <AIQuickInsight />
+        </div>
       </div>
 
       {/* Charts */}

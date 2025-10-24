@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
+import { FloatingAIChat } from '@/components/dashboard/FloatingAIChat';
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,9 @@ export default function DashboardLayout({
             {children}
           </div>
         </main>
+        
+        {/* Floating AI Chat - xuất hiện ở tất cả các trang dashboard */}
+        <FloatingAIChat />
       </div>
     </SessionProvider>
   );
