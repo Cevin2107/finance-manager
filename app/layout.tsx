@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -48,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -57,6 +58,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="FinanceApp" />
         <link rel="apple-touch-icon" href="/image.png" />
         <link rel="icon" type="image/png" href="/image.png" />
+        {/* Initialize theme before the app renders to avoid flash */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`(function(){try{var k='theme';var c='dark';var d=document.documentElement;var s=localStorage.getItem(k);var sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var t=s||'system';if(t==='dark'||(t==='system'&&sys)){d.classList.add(c);}else{d.classList.remove(c);}}catch(e){}})();`}
+        </Script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

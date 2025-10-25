@@ -224,7 +224,7 @@ export function SavingsManager() {
           <Button
             variant="primary"
             onClick={() => setIsModalOpen(true)}
-            className="bg-white hover:bg-gray-100 text-blue-600 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+            className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 border-2 border-white/50 dark:border-slate-700"
           >
             <Plus size={20} className="mr-2" />
             Tạo mục tiêu mới

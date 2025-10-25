@@ -5,6 +5,12 @@
   --foreground: 23 23 23;
 }
 
+/* Class-based dark mode (manual toggle) */
+html.dark {
+  --background: 15 23 42; /* slate-900 */
+  --foreground: 248 250 252; /* slate-50 */
+}
+
 /* Dark mode for mobile and desktop */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -30,6 +36,7 @@ body {
   color: rgb(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
+  color-scheme: light dark;
 }
 
 @layer utilities {

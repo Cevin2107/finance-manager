@@ -17,6 +17,9 @@ import {
   ChevronDown,
   Bell,
   BellOff,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -50,6 +53,8 @@ export function Sidebar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoadingNotification, setIsLoadingNotification] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
 
   // Check notification permission on mount
   useEffect(() => {
@@ -68,7 +73,51 @@ export function Sidebar() {
         });
       }
     }
-  }, []);
+    // Initialize theme state + system listener
+    let mql: MediaQueryList | null = null;
+    const initTheme = () => {
+      try {
+        const d = document.documentElement;
+        const stored = (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
+        setThemeMode(stored);
+        const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const dark = stored === 'dark' || (stored === 'system' && systemDark);
+        d.classList.toggle('dark', dark);
+        setIsDarkMode(dark);
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    initTheme();
+    if (window.matchMedia) {
+      mql = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = (e: MediaQueryListEvent) => {
+        if (themeMode === 'system') {
+          const dark = e.matches;
+          document.documentElement.classList.toggle('dark', dark);
+          setIsDarkMode(dark);
+        }
+      };
+      mql.addEventListener('change', handler);
+      return () => {
+        mql && mql.removeEventListener('change', handler);
+      };
+    }
+  }, [themeMode]);
+
+  const setTheme = (mode: 'light' | 'dark' | 'system') => {
+    try {
+      setThemeMode(mode);
+      localStorage.setItem('theme', mode);
+      const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const dark = mode === 'dark' || (mode === 'system' && systemDark);
+      document.documentElement.classList.toggle('dark', dark);
+      setIsDarkMode(dark);
+    } catch (e) {
+      console.error('Theme set error:', e);
+    }
+  };
 
   const toggleNotifications = async () => {
     console.log('Toggle notifications clicked');
@@ -206,7 +255,7 @@ export function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-lg text-gray-900 dark:text-gray-100"
       >
         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -222,7 +271,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-40',
+          'fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 z-40',
           'transform transition-transform duration-300 ease-in-out',
           'lg:translate-x-0',
           {
@@ -233,16 +282,16 @@ export function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 dark:border-slate-700">
             <Link href="/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
                 <PiggyBank className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   FinanceApp
                 </h1>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Quản lý tài chính
                 </p>
               </div>
@@ -265,7 +314,7 @@ export function Sidebar() {
                     {
                       'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/50':
                         isActive,
-                      'text-gray-700 hover:bg-gray-100':
+                      'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700':
                         !isActive,
                     }
                   )}
@@ -278,27 +327,27 @@ export function Sidebar() {
           </nav>
 
           {/* User Menu */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 dark:border-slate-700">
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
                   {session?.user?.name?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {session?.user?.name || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {session?.user?.email}
                   </p>
                 </div>
                 <ChevronDown
                   size={20}
                   className={clsx(
-                    'transition-transform',
+                    'transition-transform text-gray-500 dark:text-gray-400',
                     isUserMenuOpen && 'rotate-180'
                   )}
                 />
@@ -306,17 +355,56 @@ export function Sidebar() {
 
               {/* Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden">
+                  {/* Theme Selector */}
+                  <div className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Giao diện</div>
+                  <button
+                    onClick={() => setTheme('system')}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-4 py-3 transition-colors',
+                      'hover:bg-gray-100 dark:hover:bg-slate-700',
+                      themeMode === 'system' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                    )}
+                  >
+                    <Monitor size={18} className="text-blue-500" />
+                    <span className="text-sm flex-1 text-left text-gray-900 dark:text-gray-100">Theo hệ thống</span>
+                    {themeMode === 'system' && <span className="text-xs text-blue-500">Đang dùng</span>}
+                  </button>
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-4 py-3 transition-colors',
+                      'hover:bg-gray-100 dark:hover:bg-slate-700',
+                      themeMode === 'light' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                    )}
+                  >
+                    <Sun size={18} className="text-amber-500" />
+                    <span className="text-sm flex-1 text-left text-gray-900 dark:text-gray-100">Sáng</span>
+                    {themeMode === 'light' && <span className="text-xs text-amber-500">Đang dùng</span>}
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={clsx(
+                      'w-full flex items-center gap-3 px-4 py-3 transition-colors',
+                      'hover:bg-gray-100 dark:hover:bg-slate-700',
+                      themeMode === 'dark' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                    )}
+                  >
+                    <Moon size={18} className="text-purple-500" />
+                    <span className="text-sm flex-1 text-left text-gray-900 dark:text-gray-100">Tối</span>
+                    {themeMode === 'dark' && <span className="text-xs text-purple-500">Đang dùng</span>}
+                  </button>
+
                   <Link
                     href="/profile"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-gray-900 dark:text-gray-100"
                   >
                     <User size={18} />
                     <span className="text-sm">Thông tin cá nhân</span>
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-gray-900 dark:text-gray-100"
                   >
                     <Settings size={18} />
                     <span className="text-sm">Cài đặt</span>
@@ -326,7 +414,7 @@ export function Sidebar() {
                   <button
                     onClick={toggleNotifications}
                     disabled={isLoadingNotification}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors border-t border-gray-200"
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors border-t border-gray-200 dark:border-slate-700 text-gray-900 dark:text-gray-100"
                   >
                     <div className="flex items-center gap-3">
                       {notificationsEnabled ? (
@@ -340,7 +428,7 @@ export function Sidebar() {
                     </div>
                     <div className={clsx(
                       'w-10 h-6 rounded-full p-1 transition-colors',
-                      notificationsEnabled ? 'bg-blue-600' : 'bg-gray-300',
+                      notificationsEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-600',
                       isLoadingNotification && 'opacity-50'
                     )}>
                       <div className={clsx(
@@ -352,7 +440,7 @@ export function Sidebar() {
                   
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 transition-colors border-t border-gray-200"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors border-t border-gray-200 dark:border-slate-700"
                   >
                     <LogOut size={18} />
                     <span className="text-sm">Đăng xuất</span>
