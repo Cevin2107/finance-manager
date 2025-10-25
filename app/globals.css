@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: 255 255 255;
-  --foreground: 23 23 23;
+  --background: 255 255 255; /* #ffffff */
+  --foreground: 34 34 34; /* #222222 - softer than pure black */
 }
 
 /* Class-based dark mode (manual toggle) */
 html.dark {
-  --background: 15 23 42; /* slate-900 */
-  --foreground: 248 250 252; /* slate-50 */
+  --background: 18 18 18; /* #121212 - recommended dark background */
+  --foreground: 238 238 238; /* #eeeeee - softer than pure white */
 }
 
-/* Dark mode for mobile and desktop */
+/* Dark mode for mobile and desktop (fallback for system preference) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 15 23 42; /* slate-900 */
-    --foreground: 248 250 252; /* slate-50 */
+    --background: 18 18 18; /* #121212 */
+    --foreground: 238 238 238; /* #eeeeee */
   }
 }
 
@@ -37,6 +37,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
   color-scheme: light dark;
+}
+
+/* Dark mode image optimization - reduce brightness to avoid eye strain */
+html.dark img {
+  filter: brightness(0.8) contrast(1.2);
+}
+
+/* Exception for logos and icons that should remain bright */
+html.dark img.no-dark-filter,
+html.dark .no-dark-filter img {
+  filter: none;
 }
 
 @layer utilities {

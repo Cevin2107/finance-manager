@@ -68,13 +68,19 @@ export function AIFinancialAnalysis() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Animated gradient background blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-blob"></div>
+      <div className="absolute top-40 right-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-yellow-400/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+
       {/* Header with action button */}
-      <Card>
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-pink-500/5 to-blue-500/5"></div>
+        <div className="relative p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                 {analysis?.analysisMode === 'monthly' ? '📅' : '📊'} Phân tích tài chính bằng AI
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
@@ -100,20 +106,23 @@ export function AIFinancialAnalysis() {
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {error && (
-        <Alert>
-          <AlertCircle className="w-4 h-4" />
-          <span>{error}</span>
-        </Alert>
+        <div className="relative z-10">
+          <Alert>
+            <AlertCircle className="w-4 h-4" />
+            <span>{error}</span>
+          </Alert>
+        </div>
       )}
 
       {!analysis && !loading && (
-        <Card variant="gradient">
-          <CardContent>
-            <div className="text-center py-12">
+        <div className="relative backdrop-blur-xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70"></div>
+          <div className="relative p-12">
+            <div className="text-center">
               <BarChart3 className="w-16 h-16 text-blue-600 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                 Xin chào{session?.user?.name ? ` ${session.user.name}` : ''}! Sẵn sàng nhận insights từ AI?
@@ -168,90 +177,104 @@ export function AIFinancialAnalysis() {
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {analysis && (
         <>
           {/* Stats Overview */}
           {analysis.stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card variant="gradient">
-                <CardContent>
+            <div className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-green-400/80 via-emerald-400/80 to-teal-400/80 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <TrendingUp className="w-5 h-5 text-white drop-shadow-lg" />
+                    <span className="text-sm text-white/90">
                       Tổng thu nhập
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-xl font-bold text-white drop-shadow-lg">
                     {analysis.stats.income.toLocaleString('vi-VN')} ₫
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card variant="gradient">
-                <CardContent>
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-red-400/80 via-pink-400/80 to-rose-400/80 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <TrendingDown className="w-5 h-5 text-white drop-shadow-lg" />
+                    <span className="text-sm text-white/90">
                       Tổng chi tiêu
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-xl font-bold text-white drop-shadow-lg">
                     {analysis.stats.expense.toLocaleString('vi-VN')} ₫
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card variant="gradient">
-                <CardContent>
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-blue-400/80 via-cyan-400/80 to-sky-400/80 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <DollarSign className="w-5 h-5 text-blue-600" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <DollarSign className="w-5 h-5 text-white drop-shadow-lg" />
+                    <span className="text-sm text-white/90">
                       Số dư
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-xl font-bold text-white drop-shadow-lg">
                     {analysis.stats.balance.toLocaleString('vi-VN')} ₫
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card variant="gradient">
-                <CardContent>
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-yellow-400/80 via-orange-400/80 to-amber-400/80 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden group hover:scale-105 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+                <div className="relative p-6">
                   <div className="flex items-center gap-3 mb-2">
-                    <Sparkles className="w-5 h-5 text-yellow-600" />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <Sparkles className="w-5 h-5 text-white drop-shadow-lg" />
+                    <span className="text-sm text-white/90">
                       Tiết kiệm
                     </span>
                   </div>
-                  <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-xl font-bold text-white drop-shadow-lg">
                     {analysis.stats.savingsRate}%
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
 
           {/* AI Analysis */}
-          <Card>
-            <CardHeader title="Phân tích chi tiết từ AI" />
-            <CardContent>
+          <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-pink-500/5"></div>
+            <div className="relative p-6">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  ✨ Phân tích chi tiết từ AI
+                </h3>
+              </div>
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {analysis.summary}
                 </ReactMarkdown>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Top Expenses */}
           {analysis.topExpenseCategories && analysis.topExpenseCategories.length > 0 && (
-            <Card>
-              <CardHeader title="Top danh mục chi tiêu" />
-              <CardContent>
+            <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-pink-500/5 to-orange-500/5"></div>
+              <div className="relative p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
+                    🔥 Top danh mục chi tiêu
+                  </h3>
+                </div>
                 <div className="space-y-3">
                   {analysis.topExpenseCategories.map((item, index) => (
                     <div key={index}>
@@ -263,9 +286,9 @@ export function AIFinancialAnalysis() {
                           {item.amount.toLocaleString('vi-VN')} ₫
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="w-full bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full h-2 border border-white/10">
                         <div
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 h-full rounded-full transition-all shadow-lg"
                           style={{
                             width: `${
                               (item.amount /
@@ -278,8 +301,8 @@ export function AIFinancialAnalysis() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </>
       )}

@@ -194,7 +194,7 @@ export function QuickTransaction() {
               className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 type === 'income'
                   ? 'bg-green-500 text-white shadow-lg scale-105'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20'
+                  : 'bg-white dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20'
               }`}
             >
               <TrendingUp className="w-5 h-5" />
@@ -208,7 +208,7 @@ export function QuickTransaction() {
               className={`p-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
                 type === 'expense'
                   ? 'bg-red-500 text-white shadow-lg scale-105'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  : 'bg-white dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20'
               }`}
             >
               <TrendingDown className="w-5 h-5" />
@@ -231,7 +231,7 @@ export function QuickTransaction() {
                       ? type === 'income'
                         ? 'bg-green-500 text-white shadow-md'
                         : 'bg-red-500 text-white shadow-md'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'bg-white dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
                   }`}
                 >
                   {category === cat && <Check className="w-4 h-4 inline mr-1" />}
@@ -304,14 +304,14 @@ export function QuickTransaction() {
       {/* Category Management Modal */}
       {showCategoryModal && (
         <Modal isOpen={showCategoryModal} onClose={() => setShowCategoryModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full">
+          <div className="bg-white dark:bg-[#1e1e1e] rounded-xl p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 Quản lý danh mục
               </h3>
               <button
                 onClick={() => setShowCategoryModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] rounded"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -324,7 +324,7 @@ export function QuickTransaction() {
                 className={`p-2 rounded-lg text-sm ${
                   editingType === 'expense'
                     ? 'bg-red-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700'
+                    : 'bg-gray-100 dark:bg-[#2a2a2a]'
                 }`}
               >
                 Chi tiêu
@@ -334,7 +334,7 @@ export function QuickTransaction() {
                 className={`p-2 rounded-lg text-sm ${
                   editingType === 'income'
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700'
+                    : 'bg-gray-100 dark:bg-[#2a2a2a]'
                 }`}
               >
                 Thu nhập
@@ -359,7 +359,7 @@ export function QuickTransaction() {
               {(editingType === 'income' ? incomeCategories : expenseCategories).map((cat) => (
                 <div
                   key={cat}
-                  className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="flex items-center justify-between p-2 bg-gray-50 dark:bg-[#2a2a2a] rounded-lg"
                 >
                   <span className="text-sm">{cat}</span>
                   <button

@@ -34,7 +34,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             // Variants
             'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500':
               variant === 'primary',
-            'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600':
+            'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-[#2a2a2a] dark:text-gray-100 dark:hover:bg-[#333333]':
               variant === 'secondary',
             'bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 focus:ring-red-500':
               variant === 'danger',

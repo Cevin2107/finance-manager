@@ -256,7 +256,7 @@ export function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-lg text-gray-900 dark:text-gray-100"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-[#1e1e1e] shadow-lg text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-800"
       >
         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -272,7 +272,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-full w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 z-40',
+          'fixed top-0 left-0 h-full w-64 bg-white dark:bg-[#1e1e1e] border-r border-gray-200 dark:border-gray-800 z-40',
           'transform transition-transform duration-300 ease-in-out',
           'lg:translate-x-0',
           {
@@ -283,7 +283,7 @@ export function Sidebar() {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
             <Link href="/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
                 <PiggyBank className="w-6 h-6 text-white" />
@@ -315,7 +315,7 @@ export function Sidebar() {
                     {
                       'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/50':
                         isActive,
-                      'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700':
+                      'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2a2a]':
                         !isActive,
                     }
                   )}
@@ -328,11 +328,11 @@ export function Sidebar() {
           </nav>
 
           {/* User Menu */}
-          <div className="p-4 border-t border-gray-200 dark:border-slate-700">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-white font-semibold">
                   {session?.user?.name?.[0]?.toUpperCase() || 'U'}
@@ -356,15 +356,15 @@ export function Sidebar() {
 
               {/* Dropdown Menu */}
               {isUserMenuOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden">
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden">
                   {/* Theme Selector */}
                   <div className="px-4 pt-3 pb-1 text-xs font-semibold text-gray-500 dark:text-gray-400">Giao diện</div>
                   <button
                     onClick={() => setTheme('system')}
                     className={clsx(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors',
-                      'hover:bg-gray-100 dark:hover:bg-slate-700',
-                      themeMode === 'system' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                      'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]',
+                      themeMode === 'system' ? 'bg-gray-100 dark:bg-[#2a2a2a]' : ''
                     )}
                   >
                     <Monitor size={18} className="text-blue-500" />
@@ -375,8 +375,8 @@ export function Sidebar() {
                     onClick={() => setTheme('light')}
                     className={clsx(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors',
-                      'hover:bg-gray-100 dark:hover:bg-slate-700',
-                      themeMode === 'light' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                      'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]',
+                      themeMode === 'light' ? 'bg-gray-100 dark:bg-[#2a2a2a]' : ''
                     )}
                   >
                     <Sun size={18} className="text-amber-500" />
@@ -387,8 +387,8 @@ export function Sidebar() {
                     onClick={() => setTheme('dark')}
                     className={clsx(
                       'w-full flex items-center gap-3 px-4 py-3 transition-colors',
-                      'hover:bg-gray-100 dark:hover:bg-slate-700',
-                      themeMode === 'dark' ? 'bg-gray-100 dark:bg-slate-700' : ''
+                      'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]',
+                      themeMode === 'dark' ? 'bg-gray-100 dark:bg-[#2a2a2a]' : ''
                     )}
                   >
                     <Moon size={18} className="text-purple-500" />
@@ -398,14 +398,14 @@ export function Sidebar() {
 
                   <Link
                     href="/profile"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-gray-900 dark:text-gray-100"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-gray-900 dark:text-gray-100 border-t border-gray-200 dark:border-gray-800"
                   >
                     <User size={18} />
                     <span className="text-sm">Thông tin cá nhân</span>
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-gray-900 dark:text-gray-100"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors text-gray-900 dark:text-gray-100"
                   >
                     <Settings size={18} />
                     <span className="text-sm">Cài đặt</span>
@@ -415,7 +415,7 @@ export function Sidebar() {
                   <button
                     onClick={toggleNotifications}
                     disabled={isLoadingNotification}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors border-t border-gray-200 dark:border-slate-700 text-gray-900 dark:text-gray-100"
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors border-t border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100"
                   >
                     <div className="flex items-center gap-3">
                       {notificationsEnabled ? (
@@ -429,7 +429,7 @@ export function Sidebar() {
                     </div>
                     <div className={clsx(
                       'w-10 h-6 rounded-full p-1 transition-colors',
-                      notificationsEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-600',
+                      notificationsEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600',
                       isLoadingNotification && 'opacity-50'
                     )}>
                       <div className={clsx(
@@ -441,7 +441,7 @@ export function Sidebar() {
                   
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors border-t border-gray-200 dark:border-slate-700"
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-[#2a2a2a] text-red-600 dark:text-red-400 transition-colors border-t border-gray-200 dark:border-gray-800"
                   >
                     <LogOut size={18} />
                     <span className="text-sm">Đăng xuất</span>

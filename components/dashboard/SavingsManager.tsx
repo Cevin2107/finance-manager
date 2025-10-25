@@ -205,61 +205,70 @@ export function SavingsManager() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with gradient background */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]"></div>
-        <div className="relative flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <PiggyBank className="w-7 h-7 text-white" />
-              </div>
-              Mục tiêu tiết kiệm
-            </h1>
-            <p className="text-blue-100 text-lg">
-              Quản lý và theo dõi các mục tiêu tài chính của bạn
-            </p>
-          </div>
-          <Button
-            variant="primary"
-            onClick={() => setIsModalOpen(true)}
-            className="bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 border-2 border-white/50 dark:border-slate-700"
-          >
-            <Plus size={20} className="mr-2" />
-            Tạo mục tiêu mới
-          </Button>
-        </div>
+    <div className="space-y-6 relative">
+      {/* Animated gradient background blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-blob"></div>
+      <div className="absolute top-40 right-0 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-red-400/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
 
-        {/* Summary Stats */}
-        {savings.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <p className="text-blue-100 text-sm mb-1">Tổng mục tiêu</p>
-              <p className="text-3xl font-bold text-white">{savings.length}</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <p className="text-blue-100 text-sm mb-1">Tổng đã tiết kiệm</p>
-              <p className="text-3xl font-bold text-white">
-                {savings.reduce((sum, s) => sum + s.currentAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+      {/* Header with glassmorphism */}
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+        <div className="relative p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400/20 to-purple-400/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20">
+                  <PiggyBank className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                </div>
+                Mục tiêu tiết kiệm
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 text-lg">
+                Quản lý và theo dõi các mục tiêu tài chính của bạn
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-              <p className="text-blue-100 text-sm mb-1">Tổng mục tiêu</p>
-              <p className="text-3xl font-bold text-white">
-                {savings.reduce((sum, s) => sum + s.targetAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
-              </p>
-            </div>
+            <Button
+              variant="primary"
+              onClick={() => setIsModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+            >
+              <Plus size={20} className="mr-2" />
+              Tạo mục tiêu mới
+            </Button>
           </div>
-        )}
+
+          {/* Summary Stats */}
+          {savings.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl p-4 border border-white/20">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng mục tiêu</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{savings.length}</p>
+              </div>
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-2xl p-4 border border-white/20">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng đã tiết kiệm</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  {savings.reduce((sum, s) => sum + s.currentAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                </p>
+              </div>
+              <div className="relative backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-4 border border-white/20">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng mục tiêu</p>
+                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  {savings.reduce((sum, s) => sum + s.targetAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Alerts */}
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+      <div className="relative z-10">
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+      </div>
 
       {/* Savings Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {savings.map((saving) => {
           const progress = getProgress(saving);
           const daysLeft = getDaysLeft(saving.targetDate);
@@ -267,15 +276,15 @@ export function SavingsManager() {
           const isCompleted = progress >= 100;
 
           return (
-            <Card key={saving._id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 rounded-3xl">
+            <div key={saving._id} className="group relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:scale-105 transition-all duration-300">
               {/* Gradient Header */}
               <div
-                className="h-32 relative rounded-t-3xl"
+                className="h-32 relative rounded-t-3xl backdrop-blur-xl"
                 style={{
                   background: `linear-gradient(135deg, ${saving.color}dd, ${saving.color})`
                 }}
               >
-                <div className="absolute inset-0 bg-grid-white/10"></div>
+                <div className="absolute inset-0 bg-white/10 dark:bg-black/10"></div>
                 
                 {/* Delete Button */}
                 <button
@@ -326,7 +335,7 @@ export function SavingsManager() {
                 )}
               </div>
 
-              <CardContent className="pt-6">
+              <div className="relative p-6">
                 {/* Progress Section */}
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-3">
@@ -337,7 +346,7 @@ export function SavingsManager() {
                       {progress.toFixed(0)}%
                     </span>
                   </div>
-                  <div className="relative w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                  <div className="relative w-full h-4 bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full overflow-hidden shadow-inner border border-white/10">
                     <div
                       className="absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full"
                       style={{
@@ -437,14 +446,15 @@ export function SavingsManager() {
                     Rút tiền
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
 
         {savings.length === 0 && (
-          <div className="col-span-full">
-            <div className="text-center py-20 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+          <div className="col-span-full relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-blue-500/5 to-purple-500/5"></div>
+            <div className="relative text-center py-20">
               <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
                 <PiggyBank size={48} className="text-white" />
               </div>
@@ -598,7 +608,7 @@ export function SavingsManager() {
         size="sm"
       >
         <form onSubmit={handleTransaction} className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-gray-50 dark:bg-[#2a2a2a] p-4 rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
               Mục tiêu
             </p>

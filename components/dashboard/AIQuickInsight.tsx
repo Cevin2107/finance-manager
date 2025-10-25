@@ -54,33 +54,35 @@ export function AIQuickInsight() {
 
   if (loading) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full">
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-cyan-500/20 dark:from-purple-600/30 dark:via-blue-600/30 dark:to-cyan-600/30 border border-white/30 dark:border-purple-500/30 rounded-3xl shadow-2xl h-full overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"></div>
+        <div className="relative p-6">
           <div className="flex items-center justify-center py-12">
             <Loading size="md" />
-            <span className="ml-3 text-gray-600 dark:text-gray-400 text-sm">
-              Đang phân tích...
+            <span className="ml-3 text-gray-700 dark:text-gray-300 text-sm font-medium">
+              🤖 AI đang phân tích...
             </span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (error || !analysis?.stats) {
     return (
-      <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full">
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-cyan-500/20 dark:from-purple-600/30 dark:via-blue-600/30 dark:to-cyan-600/30 border border-white/30 dark:border-purple-500/30 rounded-3xl shadow-2xl h-full overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"></div>
+        <div className="relative p-6">
           <div className="text-center py-8">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <AlertCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="w-14 h-14 backdrop-blur-lg bg-purple-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <AlertCircle className="w-7 h-7 text-purple-600 dark:text-purple-300" />
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              {analysis?.summary || 'Chưa có giao dịch. Hãy thêm để nhận insights!'}
+            <p className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+              {analysis?.summary || '📝 Chưa có giao dịch. Hãy thêm để nhận AI insights!'}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -88,26 +90,31 @@ export function AIQuickInsight() {
   const periodText = analysis.period || '7 ngày qua';
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-cyan-900/20 h-full border-2 border-purple-200 dark:border-purple-800">
-      <CardContent>
+    <div className="group relative backdrop-blur-xl bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-cyan-500/20 dark:from-purple-600/30 dark:via-blue-600/30 dark:to-cyan-600/30 border border-white/30 dark:border-purple-500/30 rounded-3xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 h-full overflow-hidden">
+      {/* Animated gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent group-hover:from-white/40 transition-all duration-500"></div>
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl group-hover:bg-purple-400/30 transition-all duration-500"></div>
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-400/20 rounded-full blur-3xl group-hover:bg-blue-400/30 transition-all duration-500"></div>
+      
+      <div className="relative p-6">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-12 h-12 backdrop-blur-sm bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+            <Sparkles className="w-6 h-6 text-white drop-shadow-lg" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-gray-100">
+            <h3 className="font-bold text-lg bg-gradient-to-r from-purple-700 to-blue-700 dark:from-purple-300 dark:to-blue-300 bg-clip-text text-transparent">
               AI Insights
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-700 dark:text-gray-300 font-medium backdrop-blur-sm bg-white/30 dark:bg-gray-800/30 px-2 py-0.5 rounded-full inline-block">
               {periodEmoji} {periodText}
             </p>
           </div>
         </div>
 
-        {/* AI Summary - Nhận xét và lời khuyên */}
+        {/* AI Summary */}
         <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
+          <div className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed space-y-2 backdrop-blur-sm bg-white/20 dark:bg-gray-800/20 p-4 rounded-2xl border border-white/20 dark:border-gray-700/20">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {analysis.summary}
             </ReactMarkdown>
@@ -116,10 +123,10 @@ export function AIQuickInsight() {
 
         {/* Income Stability Badge */}
         {analysis.incomeStability && (
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-3 ${
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold mb-4 backdrop-blur-md border shadow-lg ${
             analysis.incomeStability.isStable
-              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+              ? 'bg-green-500/80 text-white border-green-300/30'
+              : 'bg-yellow-500/80 text-white border-yellow-300/30'
           }`}>
             {analysis.incomeStability.isStable ? '✓' : '⚠'} Thu nhập{' '}
             {analysis.incomeStability.isStable ? 'ổn định' : 'biến động'}
@@ -129,11 +136,12 @@ export function AIQuickInsight() {
         {/* View Full Analysis Link */}
         <a
           href="/dashboard/ai"
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold hover:gap-2 transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2.5 backdrop-blur-md bg-gradient-to-r from-purple-500/80 to-blue-500/80 hover:from-purple-600/90 hover:to-blue-600/90 text-white text-sm font-semibold rounded-xl border border-white/30 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
         >
+          <Sparkles className="w-4 h-4" />
           Xem phân tích chi tiết →
         </a>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

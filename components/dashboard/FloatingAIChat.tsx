@@ -95,7 +95,7 @@ export function FloatingAIChat() {
       {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-6 right-6 z-50 w-[420px] h-[650px] flex flex-col animate-in slide-in-from-bottom-5 duration-300">
-          <div className="h-full flex flex-col bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="h-full flex flex-col bg-white dark:bg-[#1e1e1e] rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 p-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export function FloatingAIChat() {
                       <button
                         key={i}
                         onClick={() => handleSend(q)}
-                        className="w-full text-sm px-4 py-3 bg-white dark:bg-gray-800 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-gray-600 rounded-xl text-left transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-purple-500 hover:shadow-lg group"
+                        className="w-full text-sm px-4 py-3 bg-white dark:bg-[#1e1e1e] hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-[#2a2a2a] dark:hover:to-[#2a2a2a] rounded-xl text-left transition-all duration-200 border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-purple-500 hover:shadow-lg group"
                       >
                         <Sparkles className="w-3.5 h-3.5 inline-block mr-2 text-purple-500 group-hover:scale-110 transition-transform" />
                         <span className="text-gray-700 dark:text-gray-300">{q}</span>
@@ -172,7 +172,7 @@ export function FloatingAIChat() {
                         className={`inline-block px-4 py-3 text-sm shadow-md ${
                           msg.role === 'user'
                             ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-3xl rounded-tr-lg'
-                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-3xl rounded-tl-lg'
+                            : 'bg-white dark:bg-[#1e1e1e] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-800 rounded-3xl rounded-tl-lg'
                         }`}
                       >
                         {msg.role === 'assistant' ? (
@@ -201,7 +201,7 @@ export function FloatingAIChat() {
                   <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
-                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-5 py-3 rounded-3xl rounded-tl-lg shadow-md">
+                  <div className="bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800 px-5 py-3 rounded-3xl rounded-tl-lg shadow-md">
                     <div className="flex gap-1.5">
                       <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce" />
                       <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
@@ -222,7 +222,7 @@ export function FloatingAIChat() {
             )}
 
             {/* Input Area */}
-            <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 bg-white dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800">
               <div className="flex gap-2 items-center">
                 <div className="flex-1 relative">
                   <input
@@ -236,7 +236,7 @@ export function FloatingAIChat() {
                     }}
                     placeholder="Nhập câu hỏi của bạn..."
                     disabled={loading}
-                    className="w-full px-4 py-3 pr-12 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 pr-12 text-sm bg-gray-100 dark:bg-[#2a2a2a] border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <button

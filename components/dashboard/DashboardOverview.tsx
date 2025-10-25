@@ -158,82 +158,116 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-          Dashboard
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Tổng quan tài chính của bạn
-        </p>
+    <div className="space-y-6 relative">
+      {/* Animated Background Gradient Blobs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-300 dark:bg-purple-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-96 h-96 bg-yellow-300 dark:bg-yellow-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-300 dark:bg-pink-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Header with Glassmorphism */}
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-blue-500/10 rounded-3xl"></div>
+        <div className="relative">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            ✨ Tổng quan tài chính của bạn
+          </p>
+        </div>
       </div>
 
       {/* Main Layout: Stats + AI Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left side: Stats Cards (2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Stats Cards - Gradient Design */}
+          {/* Stats Cards - Glassmorphism Design */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6 bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center justify-between">
+            {/* Income Card */}
+            <div className="group relative backdrop-blur-xl bg-gradient-to-br from-green-500/80 via-emerald-500/80 to-teal-500/80 dark:from-green-600/60 dark:via-emerald-600/60 dark:to-teal-600/60 border border-white/30 dark:border-white/10 rounded-3xl p-6 shadow-2xl hover:shadow-green-500/50 transition-all duration-500 hover:scale-105 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="relative flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-green-100 mb-2 font-medium">Tổng Thu Nhập</p>
-                  <h3 className="text-3xl font-bold tracking-tight">
+                  <p className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    Tổng Thu Nhập
+                  </p>
+                  <h3 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">
                     {stats.totalIncome.toLocaleString('vi-VN')} ₫
                   </h3>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
-                  <TrendingUp className="w-8 h-8 text-white" />
+                <div className="bg-white/30 backdrop-blur-sm p-4 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform duration-500">
+                  <TrendingUp className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-6 bg-gradient-to-br from-red-500 via-rose-600 to-pink-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center justify-between">
+            {/* Expense Card */}
+            <div className="group relative backdrop-blur-xl bg-gradient-to-br from-red-500/80 via-rose-500/80 to-pink-500/80 dark:from-red-600/60 dark:via-rose-600/60 dark:to-pink-600/60 border border-white/30 dark:border-white/10 rounded-3xl p-6 shadow-2xl hover:shadow-red-500/50 transition-all duration-500 hover:scale-105 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="relative flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-red-100 mb-2 font-medium">Tổng Chi Tiêu</p>
-                  <h3 className="text-3xl font-bold tracking-tight">
+                  <p className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    Tổng Chi Tiêu
+                  </p>
+                  <h3 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">
                     {stats.totalExpense.toLocaleString('vi-VN')} ₫
                   </h3>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
-                  <TrendingDown className="w-8 h-8 text-white" />
+                <div className="bg-white/30 backdrop-blur-sm p-4 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform duration-500">
+                  <TrendingDown className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className={`p-6 bg-gradient-to-br ${
+            {/* Balance Card */}
+            <div className={`group relative backdrop-blur-xl ${
               stats.balance >= 0 
-                ? 'from-blue-500 via-indigo-600 to-purple-600' 
-                : 'from-orange-500 via-red-600 to-rose-600'
-            } text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300`}>
-              <div className="flex items-center justify-between">
+                ? 'bg-gradient-to-br from-blue-500/80 via-indigo-500/80 to-purple-500/80 dark:from-blue-600/60 dark:via-indigo-600/60 dark:to-purple-600/60' 
+                : 'bg-gradient-to-br from-orange-500/80 via-red-500/80 to-rose-500/80 dark:from-orange-600/60 dark:via-red-600/60 dark:to-rose-600/60'
+            } border border-white/30 dark:border-white/10 rounded-3xl p-6 shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 hover:scale-105 overflow-hidden`}>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="relative flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-blue-100 mb-2 font-medium">Số Dư</p>
-                  <h3 className="text-3xl font-bold tracking-tight">
+                  <p className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    Số Dư
+                  </p>
+                  <h3 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">
                     {stats.balance.toLocaleString('vi-VN')} ₫
                   </h3>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
-                  <Wallet className="w-8 h-8 text-white" />
+                <div className="bg-white/30 backdrop-blur-sm p-4 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform duration-500">
+                  <Wallet className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-6 bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center justify-between">
+            {/* Transaction Count Card */}
+            <div className="group relative backdrop-blur-xl bg-gradient-to-br from-purple-500/80 via-violet-500/80 to-indigo-500/80 dark:from-purple-600/60 dark:via-violet-600/60 dark:to-indigo-600/60 border border-white/30 dark:border-white/10 rounded-3xl p-6 shadow-2xl hover:shadow-purple-500/50 transition-all duration-500 hover:scale-105 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="relative flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-purple-100 mb-2 font-medium">Giao Dịch</p>
-                  <h3 className="text-3xl font-bold tracking-tight">
+                  <p className="text-sm text-white/90 mb-2 font-medium flex items-center gap-2">
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                    Giao Dịch
+                  </p>
+                  <h3 className="text-3xl font-bold tracking-tight text-white drop-shadow-lg">
                     {stats.transactionCount}
                   </h3>
                 </div>
-                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
-                  <Sparkles className="w-8 h-8 text-white" />
+                <div className="bg-white/30 backdrop-blur-sm p-4 rounded-2xl shadow-xl group-hover:rotate-12 transition-transform duration-500">
+                  <Sparkles className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
 
@@ -243,57 +277,59 @@ export function DashboardOverview() {
         </div>
       </div>
 
-      {/* Modern AreaChart with Period Selector */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Biểu đồ tài chính
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Thu nhập & Chi tiêu theo thời gian
-            </p>
+      {/* Modern AreaChart with Glassmorphism */}
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl p-6 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl"></div>
+        <div className="relative">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                📊 Biểu đồ tài chính
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Thu nhập & Chi tiêu theo thời gian
+              </p>
+            </div>
+            
+            {/* Period Selector with Glassmorphism */}
+            <div className="flex items-center gap-2 backdrop-blur-lg bg-white/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-white/30 dark:border-gray-700/30 shadow-lg">
+              <button
+                onClick={() => setChartPeriod('week')}
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
+                  chartPeriod === 'week'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <Calendar className="w-4 h-4 inline-block mr-1" />
+                Tuần
+              </button>
+              <button
+                onClick={() => setChartPeriod('month')}
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
+                  chartPeriod === 'month'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <Calendar className="w-4 h-4 inline-block mr-1" />
+                Tháng
+              </button>
+              <button
+                onClick={() => setChartPeriod('year')}
+                className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 ${
+                  chartPeriod === 'year'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <Calendar className="w-4 h-4 inline-block mr-1" />
+                Năm
+              </button>
+            </div>
           </div>
-          
-          {/* Period Selector */}
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            <button
-              onClick={() => setChartPeriod('week')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                chartPeriod === 'week'
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Calendar className="w-4 h-4 inline-block mr-1" />
-              Tuần
-            </button>
-            <button
-              onClick={() => setChartPeriod('month')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                chartPeriod === 'month'
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Calendar className="w-4 h-4 inline-block mr-1" />
-              Tháng
-            </button>
-            <button
-              onClick={() => setChartPeriod('year')}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
-                chartPeriod === 'year'
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Calendar className="w-4 h-4 inline-block mr-1" />
-              Năm
-            </button>
-          </div>
-        </div>
 
-        <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={400}>
           <AreaChart data={getChartData()}>
             <defs>
               <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -344,66 +380,84 @@ export function DashboardOverview() {
             />
           </AreaChart>
         </ResponsiveContainer>
-      </Card>
+        </div>
+      </div>
 
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader title="Giao dịch gần đây" subtitle={`${Math.min(5, transactions.length)} giao dịch mới nhất`} />
-        <CardContent>
-          <div className="space-y-4">
-            {transactions.slice(0, 5).map((transaction) => (
+      {/* Recent Transactions with Glassmorphism */}
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-blue-500/5 to-purple-500/5"></div>
+        <div className="relative">
+          <div className="p-6 border-b border-white/20 dark:border-gray-700/30">
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              💳 Giao dịch gần đây
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {Math.min(5, transactions.length)} giao dịch mới nhất
+            </p>
+          </div>
+          <div className="p-6 space-y-3">
+            {transactions.slice(0, 5).map((transaction, index) => (
               <div
                 key={transaction._id}
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                className="group relative backdrop-blur-md bg-white/50 dark:bg-gray-800/50 border border-white/30 dark:border-gray-700/30 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+                style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      transaction.type === 'income'
-                        ? 'bg-green-100 dark:bg-green-900/30'
-                        : 'bg-red-100 dark:bg-red-900/30'
-                    }`}
-                  >
-                    {transaction.type === 'income' ? (
-                      <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    )}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-2xl backdrop-blur-sm flex items-center justify-center shadow-lg ${
+                        transaction.type === 'income'
+                          ? 'bg-green-500/80 border border-green-300/30'
+                          : 'bg-red-500/80 border border-red-300/30'
+                      }`}
+                    >
+                      {transaction.type === 'income' ? (
+                        <TrendingUp className="w-6 h-6 text-white drop-shadow-lg" />
+                      ) : (
+                        <TrendingDown className="w-6 h-6 text-white drop-shadow-lg" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">
+                        {transaction.category}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {transaction.description || 'Không có mô tả'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {transaction.category}
+                  <div className="text-right">
+                    <p
+                      className={`text-lg font-bold ${
+                        transaction.type === 'income'
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}
+                    >
+                      {transaction.type === 'income' ? '+' : '-'}
+                      {transaction.amount.toLocaleString('vi-VN')} ₫
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {transaction.description || 'Không có mô tả'}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 backdrop-blur-sm bg-white/30 dark:bg-gray-700/30 px-2 py-0.5 rounded-full inline-block mt-1">
+                      {format(new Date(transaction.date), 'dd/MM/yyyy')}
                     </p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`font-bold ${
-                      transaction.type === 'income'
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    }`}
-                  >
-                    {transaction.type === 'income' ? '+' : '-'}
-                    {transaction.amount.toLocaleString('vi-VN')} ₫
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {format(new Date(transaction.date), 'dd/MM/yyyy')}
-                  </p>
                 </div>
               </div>
             ))}
             {transactions.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                Chưa có giao dịch nào
-              </p>
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full backdrop-blur-lg bg-gray-500/20 mb-4">
+                  <Sparkles className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Chưa có giao dịch nào
+                </p>
+              </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

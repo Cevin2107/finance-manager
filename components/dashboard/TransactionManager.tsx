@@ -349,37 +349,45 @@ export function TransactionManager() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with gradient background */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-green-600 via-blue-600 to-purple-600 p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]"></div>
+    <div className="space-y-6 relative">
+      {/* Animated Background Gradient Blobs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 -left-4 w-96 h-96 bg-green-300 dark:bg-green-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute top-20 -right-4 w-96 h-96 bg-blue-300 dark:bg-blue-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-20 w-96 h-96 bg-purple-300 dark:bg-purple-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Header with Glassmorphism */}
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl p-8 shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-blue-500/10 to-purple-500/10 rounded-3xl"></div>
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl"></div>
         <div className="relative">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <TrendingUp className="w-7 h-7 text-white" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <div className="w-12 h-12 backdrop-blur-sm bg-gradient-to-br from-green-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl">
+              <TrendingUp className="w-7 h-7 text-white drop-shadow-lg" />
             </div>
-            Quản lý giao dịch
+            💳 Quản lý giao dịch
           </h1>
-          <p className="text-blue-100 text-lg">
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
             Theo dõi và quản lý các giao dịch thu nhập & chi tiêu của bạn
           </p>
           
           {/* Quick Stats */}
           {transactions.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                <p className="text-blue-100 text-sm mb-1">Tổng giao dịch</p>
-                <p className="text-3xl font-bold text-white">{transactions.length}</p>
+              <div className="backdrop-blur-md bg-green-500/20 dark:bg-green-600/30 rounded-2xl p-4 border border-white/30 dark:border-green-500/30 shadow-lg hover:scale-105 transition-transform duration-300">
+                <p className="text-green-700 dark:text-green-300 text-sm mb-1 font-semibold">📊 Tổng giao dịch</p>
+                <p className="text-3xl font-bold text-green-900 dark:text-green-100">{transactions.length}</p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                <p className="text-blue-100 text-sm mb-1">Thu nhập</p>
-                <p className="text-3xl font-bold text-white">
+              <div className="backdrop-blur-md bg-blue-500/20 dark:bg-blue-600/30 rounded-2xl p-4 border border-white/30 dark:border-blue-500/30 shadow-lg hover:scale-105 transition-transform duration-300">
+                <p className="text-blue-700 dark:text-blue-300 text-sm mb-1 font-semibold">💰 Thu nhập</p>
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">
                   {transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
                 </p>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                <p className="text-blue-100 text-sm mb-1">Chi tiêu</p>
-                <p className="text-3xl font-bold text-white">
+              <div className="backdrop-blur-md bg-purple-500/20 dark:bg-purple-600/30 rounded-2xl p-4 border border-white/30 dark:border-purple-500/30 shadow-lg hover:scale-105 transition-transform duration-300">
+                <p className="text-purple-700 dark:text-purple-300 text-sm mb-1 font-semibold">💸 Chi tiêu</p>
+                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">
                   {transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
                 </p>
               </div>
@@ -393,22 +401,23 @@ export function TransactionManager() {
       {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
       {/* Inline Add Transaction Form (always visible) */}
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 border-2 border-blue-100 dark:border-blue-800">
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div className="relative p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Type selector */}
             <div>
               <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 block">
                 Loại giao dịch
               </label>
-              <div className="inline-flex rounded-2xl bg-white dark:bg-gray-800 p-1.5 shadow-lg border border-gray-200 dark:border-gray-700">
+              <div className="inline-flex rounded-2xl bg-white dark:bg-[#1e1e1e] p-1.5 shadow-lg border border-gray-200 dark:border-gray-800">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
                   className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
                     formData.type === 'income'
                       ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg scale-105'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'
                   }`}
                 >
                   <TrendingUp size={18} />
@@ -420,7 +429,7 @@ export function TransactionManager() {
                   className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
                     formData.type === 'expense'
                       ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg scale-105'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2a2a]'
                   }`}
                 >
                   <TrendingDown size={18} />
@@ -443,7 +452,7 @@ export function TransactionManager() {
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                       formData.category === c.value
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:shadow-md'
+                        : 'bg-white dark:bg-[#1e1e1e] text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-800 hover:border-blue-400 hover:shadow-md'
                     }`}
                   >
                     {c.label}
@@ -530,11 +539,13 @@ export function TransactionManager() {
               Thêm giao dịch
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
       {/* Filters and Sorting */}
-      <Card>
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-blue-500/5 to-purple-500/5"></div>
+        <div className="relative p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -560,7 +571,7 @@ export function TransactionManager() {
             {/* Sort by Date */}
             <button
               onClick={() => toggleSort('date')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[#1e1e1e] border-2 border-gray-200 dark:border-gray-800 rounded-lg hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
             >
               <Calendar size={18} />
               <span className="font-medium">Ngày</span>
@@ -572,7 +583,7 @@ export function TransactionManager() {
             {/* Sort by Amount */}
             <button
               onClick={() => toggleSort('amount')}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-[#1e1e1e] border-2 border-gray-200 dark:border-gray-800 rounded-lg hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
             >
               <span className="font-bold">₫</span>
               <span className="font-medium">Số tiền</span>
@@ -582,16 +593,17 @@ export function TransactionManager() {
             </button>
           </div>
           
-          <div className="flex items-center gap-2 mt-3 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 mt-3 text-sm text-gray-700 dark:text-gray-300">
             <Filter size={18} />
             <span className="font-medium">{filteredTransactions.length} giao dịch</span>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Transactions List */}
-      <Card>
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div className="relative p-6">
           <div className="space-y-3">
             {paginatedTransactions.map((transaction) => (
               <div 
@@ -656,7 +668,7 @@ export function TransactionManager() {
             
             {filteredTransactions.length === 0 && (
               <div className="text-center py-16">
-                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-[#2a2a2a] rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search size={32} className="text-gray-400" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">Không tìm thấy giao dịch nào</p>
@@ -725,7 +737,7 @@ export function TransactionManager() {
                             className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                               currentPage === page
                                 ? 'bg-blue-600 text-white shadow-md'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#333333]'
                             }`}
                           >
                             {page}
@@ -746,12 +758,13 @@ export function TransactionManager() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Bulk Delete Section */}
-      <Card className="bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-800">
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-red-500/10 dark:bg-red-600/20 border border-red-300/30 dark:border-red-500/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent"></div>
+        <div className="relative p-6">
           <button
             onClick={() => setShowBulkDelete(!showBulkDelete)}
             className="w-full flex items-center justify-between text-left"
@@ -834,8 +847,8 @@ export function TransactionManager() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Category Manager Modal */}
       <Modal isOpen={isCategoryManagerOpen} onClose={() => setIsCategoryManagerOpen(false)} title="Quản lý danh mục" size="md">
@@ -844,7 +857,7 @@ export function TransactionManager() {
             <h4 className="font-medium">Thu nhập</h4>
             <div className="mt-2 flex flex-wrap gap-2">
               {incomeCategories.map((c) => (
-                <div key={c.value} className="flex items-center gap-2 bg-white dark:bg-gray-800 border px-2 py-1 rounded-md">
+                <div key={c.value} className="flex items-center gap-2 bg-white dark:bg-[#1e1e1e] border px-2 py-1 rounded-md">
                   <span className="text-sm">{c.label}</span>
                   <button className="text-xs text-red-500" onClick={() => setIncomeCategories((prev) => prev.filter((x) => x.value !== c.value))}>Xóa</button>
                 </div>
@@ -857,7 +870,7 @@ export function TransactionManager() {
             <h4 className="font-medium">Chi tiêu</h4>
             <div className="mt-2 flex flex-wrap gap-2">
               {expenseCategories.map((c) => (
-                <div key={c.value} className="flex items-center gap-2 bg-white dark:bg-gray-800 border px-2 py-1 rounded-md">
+                <div key={c.value} className="flex items-center gap-2 bg-white dark:bg-[#1e1e1e] border px-2 py-1 rounded-md">
                   <span className="text-sm">{c.label}</span>
                   <button className="text-xs text-red-500" onClick={() => setExpenseCategories((prev) => prev.filter((x) => x.value !== c.value))}>Xóa</button>
                 </div>

@@ -161,30 +161,41 @@ export function BudgetManager() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Animated gradient background blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl animate-blob"></div>
+      <div className="absolute top-40 right-0 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Quản lý ngân sách
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Thiết lập và theo dõi ngân sách chi tiêu
-          </p>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl p-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl"></div>
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              💰 Quản lý ngân sách
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Thiết lập và theo dõi ngân sách chi tiêu
+            </p>
+          </div>
+          <Button onClick={() => setIsModalOpen(true)} variant="success">
+            <Plus size={20} className="mr-2" />
+            Thêm ngân sách
+          </Button>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} variant="success">
-          <Plus size={20} className="mr-2" />
-          Thêm ngân sách
-        </Button>
       </div>
 
       {/* Alerts */}
-      {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-      {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+      <div className="relative z-10">
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+      </div>
 
       {/* Month/Year Selector */}
-      <Card>
-        <CardContent>
+      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-blue-500/5 to-cyan-500/5"></div>
+        <div className="relative p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
               label="Tháng"
@@ -199,17 +210,18 @@ export function BudgetManager() {
               options={years}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Budget Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {budgets.map((budget) => (
-          <Card key={budget._id} hover>
-            <CardContent>
+          <div key={budget._id} className="group relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:scale-105 transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400/20 to-purple-400/20 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/20">
                     {getStatusIcon(budget.percentage)}
                   </div>
                   <div>
@@ -232,10 +244,10 @@ export function BudgetManager() {
 
               {/* Progress Bar */}
               <div className="mb-3">
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div className="w-full bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full h-3 border border-white/10">
                   <div
                     className={clsx(
-                      'h-3 rounded-full transition-all duration-300',
+                      'h-full rounded-full transition-all duration-300 shadow-lg',
                       getProgressColor(budget.percentage)
                     )}
                     style={{ width: `${Math.min(budget.percentage, 100)}%` }}
@@ -271,14 +283,15 @@ export function BudgetManager() {
                   className="mt-4"
                 />
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
 
         {budgets.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent>
-              <div className="text-center py-12">
+          <div className="col-span-full relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-blue-500/5 to-purple-500/5"></div>
+            <div className="relative p-12">
+              <div className="text-center">
                 <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
                   Chưa có ngân sách nào được thiết lập
                 </p>
@@ -287,8 +300,8 @@ export function BudgetManager() {
                   Thêm ngân sách đầu tiên
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 

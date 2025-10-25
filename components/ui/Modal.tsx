@@ -40,9 +40,9 @@ export function Modal({
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
           className={clsx(
-            'relative w-full transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800',
+            'relative w-full transform overflow-hidden rounded-2xl bg-white dark:bg-[#1e1e1e]',
             'shadow-2xl transition-all',
-            'border border-gray-200 dark:border-gray-700',
+            'border border-gray-200 dark:border-gray-800',
             {
               'max-w-sm': size === 'sm',
               'max-w-md': size === 'md',
@@ -54,7 +54,7 @@ export function Modal({
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
               {title && (
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {title}
@@ -89,7 +89,7 @@ export function ModalFooter({
   return (
     <div
       className={clsx(
-        'flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700',
+        'flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-800',
         className
       )}
     >

@@ -18,11 +18,11 @@ export function Card({
       className={clsx(
         'rounded-xl p-6 transition-all duration-200',
         {
-          'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700':
+          'bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-gray-800':
             variant === 'default',
-          'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 border border-blue-100 dark:border-gray-700':
+          'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-[#1a1a2e] dark:to-[#16213e] border border-blue-100 dark:border-gray-800':
             variant === 'gradient',
-          'bg-white/10 dark:bg-gray-800/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/50':
+          'bg-white/10 dark:bg-[#2a2a2a]/30 backdrop-blur-lg border border-white/20 dark:border-gray-700/50':
             variant === 'glass',
           'hover:shadow-lg hover:-translate-y-1 cursor-pointer': hover,
           'shadow-sm': !hover,
@@ -93,7 +93,7 @@ export function CardFooter({
   return (
     <div
       className={clsx(
-        'mt-4 pt-4 border-t border-gray-200 dark:border-gray-700',
+        'mt-4 pt-4 border-t border-gray-200 dark:border-gray-800',
         className
       )}
       {...props}
