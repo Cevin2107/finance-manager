@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import auth from '@/auth';
-import connectDB from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
+import dbConnect from '@/lib/db';
 import Transaction from '@/models/Transaction';
 
 interface ImportTransaction {
   date: string;
-  sender: string;
+  sender?: string;
   description: string;
   type: 'income' | 'expense';
   category: string;
@@ -14,8 +15,9 @@ interface ImportTransaction {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,15 +27,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No transactions provided' }, { status: 400 });
     }
 
-    await connectDB();
+    await dbConnect();
 
     // Prepare transactions for bulk insert
     const transactionsToInsert = transactions.map(tx => ({
-      userEmail: session.user!.email,
+      userId: session.user!.id,
       type: tx.type,
       category: tx.category,
       amount: tx.amount,
-      description: `${tx.sender ? tx.sender + ' - ' : ''}${tx.description}`,
+      description: tx.sender ? `${tx.sender} - ${tx.description}` : tx.description,
       date: new Date(tx.date),
       createdAt: new Date(),
     }));

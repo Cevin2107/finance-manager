@@ -28,6 +28,9 @@ interface ParsedTransaction {
   category?: string;
   amount?: number;
   isValid?: boolean;
+  // Duplicate detection
+  isDuplicate?: boolean;
+  duplicateReason?: string;
 }
 
 interface AIClassificationResult {
@@ -45,6 +48,8 @@ export function ImportBankStatement() {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedTransaction[]>([]);
   const [classifiedData, setClassifiedData] = useState<AIClassificationResult | null>(null);
+  const [existingTransactions, setExistingTransactions] = useState<any[]>([]);
+  const [excludedIndexes, setExcludedIndexes] = useState<Set<number>>(new Set());
   const [isUploading, setIsUploading] = useState(false);
   const [isClassifying, setIsClassifying] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -144,6 +149,12 @@ export function ImportBankStatement() {
     setError('');
 
     try {
+      // Fetch existing transactions for duplicate detection
+      const existingResponse = await fetch('/api/transactions');
+      const existingData = await existingResponse.json();
+      const existing = existingData.transactions || [];
+      setExistingTransactions(existing);
+
       const response = await fetch('/api/ai/classify-transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -177,7 +188,34 @@ export function ImportBankStatement() {
       }
 
       const result: AIClassificationResult = await response.json();
-      setClassifiedData(result);
+      
+      // Detect duplicates
+      const transactionsWithDuplicateCheck = result.transactions.map((tx) => {
+        const duplicate = existing.find((existTx: any) => {
+          // Check if same date, amount, and similar description
+          const sameDate = new Date(tx.date).toDateString() === new Date(existTx.date).toDateString();
+          const sameAmount = Math.abs(tx.amount! - existTx.amount) < 1; // tolerance of 1 VND
+          const similarDesc = tx.description && existTx.description && 
+            (tx.description.toLowerCase().includes(existTx.description.toLowerCase()) ||
+             existTx.description.toLowerCase().includes(tx.description.toLowerCase()));
+          
+          return sameDate && sameAmount && (similarDesc || (!tx.description && !existTx.description));
+        });
+
+        if (duplicate) {
+          return {
+            ...tx,
+            isDuplicate: true,
+            duplicateReason: `Trùng giao dịch ${duplicate.category} ngày ${new Date(duplicate.date).toLocaleDateString('vi-VN')}`,
+          };
+        }
+        return tx;
+      });
+
+      setClassifiedData({
+        ...result,
+        transactions: transactionsWithDuplicateCheck,
+      });
       setStep('confirm');
     } catch (err: any) {
       setError(`Lỗi phân loại AI: ${err.message}`);
@@ -193,11 +231,20 @@ export function ImportBankStatement() {
     setError('');
 
     try {
+      // Filter out excluded transactions
+      const transactionsToImport = classifiedData.transactions.filter((_, idx) => !excludedIndexes.has(idx));
+
+      if (transactionsToImport.length === 0) {
+        setError('Không có giao dịch nào để import (tất cả đã bị loại bỏ)');
+        setIsImporting(false);
+        return;
+      }
+
       const response = await fetch('/api/transactions/bulk-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          transactions: classifiedData.transactions,
+          transactions: transactionsToImport,
         }),
       });
 
@@ -219,6 +266,18 @@ export function ImportBankStatement() {
     }
   };
 
+  const toggleExcludeTransaction = (index: number) => {
+    setExcludedIndexes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   const resetForm = () => {
     setFile(null);
     setParsedData([]);
@@ -226,6 +285,8 @@ export function ImportBankStatement() {
     setStep('upload');
     setError('');
     setSuccess('');
+    setExistingTransactions([]);
+    setExcludedIndexes(new Set());
   };
 
   return (
@@ -374,6 +435,11 @@ export function ImportBankStatement() {
               <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 {classifiedData.summary.total}
               </p>
+              {excludedIndexes.size > 0 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Loại bỏ {excludedIndexes.size} trùng lặp
+                </p>
+              )}
             </div>
 
             <div className="backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-white/20 rounded-2xl p-4">
@@ -430,40 +496,65 @@ export function ImportBankStatement() {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Danh mục</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Mô tả</th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Số tiền</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Trùng lặp?</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {classifiedData.transactions.map((tx, index) => (
-                      <tr key={index} className="border-t border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                          {new Date(tx.date).toLocaleDateString('vi-VN')}
-                        </td>
-                        <td className="px-4 py-3">
-                          {tx.type === 'income' ? (
-                            <span className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-lg text-xs font-semibold">
-                              <TrendingUp size={14} />
-                              Thu nhập
+                    {classifiedData.transactions.map((tx, index) => {
+                      const isExcluded = excludedIndexes.has(index);
+                      return (
+                        <tr key={index} className={`border-t border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 ${isExcluded ? 'opacity-50 line-through' : ''}`}>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {new Date(tx.date).toLocaleDateString('vi-VN')}
+                          </td>
+                          <td className="px-4 py-3">
+                            {tx.type === 'income' ? (
+                              <span className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-lg text-xs font-semibold">
+                                <TrendingUp size={14} />
+                                Thu nhập
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-1 rounded-lg text-xs font-semibold">
+                                <TrendingDown size={14} />
+                                Chi tiêu
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                            {tx.category}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                            {tx.sender && `${tx.sender} - `}{tx.description}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-semibold">
+                            <span className={tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                              {tx.type === 'income' ? '+' : '-'}{tx.amount?.toLocaleString('vi-VN')} ₫
                             </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-1 rounded-lg text-xs font-semibold">
-                              <TrendingDown size={14} />
-                              Chi tiêu
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                          {tx.category}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                          {tx.sender && `${tx.sender} - `}{tx.description}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-right font-semibold">
-                          <span className={tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                            {tx.type === 'income' ? '+' : '-'}{tx.amount?.toLocaleString('vi-VN')} ₫
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {tx.isDuplicate ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="text-xs text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-1 rounded-lg">
+                                  ⚠️ {tx.duplicateReason}
+                                </span>
+                                <button
+                                  onClick={() => toggleExcludeTransaction(index)}
+                                  className={`text-xs font-bold px-2 py-1 rounded-lg transition-all ${
+                                    isExcluded 
+                                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200' 
+                                      : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200'
+                                  }`}
+                                >
+                                  {isExcluded ? '↩️ Khôi phục' : '✖ Loại bỏ'}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -482,7 +573,8 @@ export function ImportBankStatement() {
                   className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
                 >
                   <Save size={20} className="mr-2" />
-                  Import {classifiedData.summary.total} giao dịch
+                  Import {classifiedData.summary.total - excludedIndexes.size} giao dịch
+                  {excludedIndexes.size > 0 && ` (loại bỏ ${excludedIndexes.size})`}
                 </Button>
               </div>
             </div>

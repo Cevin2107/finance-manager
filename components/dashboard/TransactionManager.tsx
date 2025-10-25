@@ -467,20 +467,42 @@ export function TransactionManager() {
             Theo dõi và quản lý các giao dịch thu nhập & chi tiêu của bạn
           </p>
           
+          {/* Balance Adjustment Card - Always Visible */}
+          <div className="mt-6">
+            <div 
+              className="backdrop-blur-md bg-gradient-to-br from-yellow-400/30 to-orange-500/30 dark:from-yellow-600/40 dark:to-orange-600/40 rounded-3xl p-6 border-2 border-yellow-500/50 dark:border-yellow-400/50 shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer group relative overflow-hidden"
+              onClick={() => setShowBalanceAdjust(true)}
+            >
+              {/* Animated gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-orange-400/20 to-yellow-400/20 animate-pulse"></div>
+              
+              <div className="relative flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg">
+                      <span className="text-2xl">💰</span>
+                    </div>
+                    <div>
+                      <p className="text-yellow-800 dark:text-yellow-200 text-lg font-bold">Số dư hiện tại</p>
+                      <p className="text-yellow-700 dark:text-yellow-300 text-xs">Nhấn để điều chỉnh số dư</p>
+                    </div>
+                  </div>
+                  <p className={`text-4xl font-black ${calculateCurrentBalance() >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>
+                    {calculateCurrentBalance().toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                  </p>
+                </div>
+                
+                <button className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white rounded-2xl transition-all shadow-xl hover:shadow-2xl font-bold text-sm flex items-center gap-2 group-hover:scale-110 transform">
+                  <Edit size={18} />
+                  Điều chỉnh số dư
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Stats */}
           {transactions.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              <div className="backdrop-blur-md bg-gradient-to-br from-yellow-400/20 to-orange-500/20 dark:from-yellow-600/30 dark:to-orange-600/30 rounded-2xl p-4 border border-white/30 dark:border-yellow-500/30 shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => setShowBalanceAdjust(true)}>
-                <p className="text-yellow-700 dark:text-yellow-300 text-sm mb-1 font-semibold flex items-center gap-2">
-                  💰 Số dư hiện tại
-                  <button className="text-xs px-2 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition">
-                    ✏️ Điều chỉnh
-                  </button>
-                </p>
-                <p className={`text-3xl font-bold ${calculateCurrentBalance() >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>
-                  {calculateCurrentBalance().toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
-                </p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="backdrop-blur-md bg-green-500/20 dark:bg-green-600/30 rounded-2xl p-4 border border-white/30 dark:border-green-500/30 shadow-lg hover:scale-105 transition-transform duration-300">
                 <p className="text-green-700 dark:text-green-300 text-sm mb-1 font-semibold">📊 Tổng giao dịch</p>
                 <p className="text-3xl font-bold text-green-900 dark:text-green-100">{transactions.length}</p>
