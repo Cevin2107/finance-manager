@@ -128,44 +128,39 @@ export class NotificationScheduler {
 
       console.log('📬 Preparing notification:', { title: notificationTitle, body: notificationBody });
 
-      // Try Service Worker with timeout, fallback to direct Notification
-      let notificationShown = false;
+      const notificationOptions = {
+        body: notificationBody,
+        icon: '/image.png',
+        badge: '/image.png',
+        tag: 'daily-summary',
+        requireInteraction: true,
+        data: {
+          url: '/dashboard',
+          timestamp: Date.now(),
+        },
+      };
 
+      // Always try Service Worker first (required for PWA/mobile)
       if ('serviceWorker' in navigator) {
         console.log('🔧 Trying Service Worker...');
         try {
-          // Set a timeout for service worker ready
-          const swPromise = navigator.serviceWorker.ready;
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Service Worker timeout')), 3000)
-          );
-
-          const registration = await Promise.race([swPromise, timeoutPromise]) as ServiceWorkerRegistration;
+          const registration = await navigator.serviceWorker.ready;
           console.log('✅ Service Worker ready:', registration);
           
-          await registration.showNotification(notificationTitle, {
-            body: notificationBody,
-            icon: '/image.png',
-            badge: '/image.png',
-            tag: 'daily-summary',
-            requireInteraction: true,
-            data: {
-              url: '/dashboard',
-              timestamp: Date.now(),
-            },
-          });
+          await registration.showNotification(notificationTitle, notificationOptions);
           console.log('✅ Notification shown via Service Worker');
-          notificationShown = true;
+          console.log('✅ Daily notification sent at:', new Date().toLocaleString('vi-VN'));
+          return; // Success, exit
         } catch (swError) {
-          console.warn('⚠️ Service Worker failed:', swError);
-          console.log('📱 Falling back to direct Notification API...');
+          console.error('❌ Service Worker notification failed:', swError);
+          // Continue to fallback
         }
       }
 
-      // Fallback to direct Notification API if Service Worker failed or not available
-      if (!notificationShown) {
-        console.log('📱 Using direct Notification API...');
-        
+      // Fallback to direct Notification API (desktop only)
+      console.log('📱 Trying direct Notification API...');
+      
+      try {
         // Try to bring window to focus first
         try {
           window.focus();
@@ -178,7 +173,6 @@ export class NotificationScheduler {
           icon: '/image.png',
           tag: 'daily-summary',
           requireInteraction: true,
-          silent: false, // Make sure it's not silent
         });
 
         // Add event handlers
@@ -201,38 +195,67 @@ export class NotificationScheduler {
           window.location.href = '/dashboard';
           notification.close();
         };
+        
         console.log('✅ Notification shown via direct Notification API');
+        console.log('✅ Daily notification sent at:', new Date().toLocaleString('vi-VN'));
+      } catch (directError: any) {
+        console.error('❌ Direct Notification API failed:', directError);
+        
+        // If it's the "illegal constructor" error, show helpful message
+        if (directError.message && directError.message.includes('Illegal constructor')) {
+          console.error('💡 This appears to be a PWA/mobile environment. Service Worker is required but failed.');
+          throw new Error('Service Worker required for notifications on this device');
+        }
+        
+        throw directError;
       }
 
-      console.log('✅ Daily notification sent at:', new Date().toLocaleString('vi-VN'));
     } catch (error) {
       console.error('❌ Failed to send daily notification:', error);
       
-      // Send a fallback notification even if AI fails
+      // Send a fallback notification even if AI fails (only via Service Worker for mobile)
       try {
         console.log('⚠️ Sending fallback notification...');
         
         const fallbackTitle = '☀️ Nhắc nhở tài chính';
         const fallbackBody = 'Hãy kiểm tra thu chi của bạn hôm nay!';
         
-        // Try direct notification first for fallback
-        const fallbackNotification = new Notification(fallbackTitle, {
-          body: fallbackBody,
-          icon: '/image.png',
-          tag: 'daily-summary',
-          requireInteraction: true,
-        });
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.showNotification(fallbackTitle, {
+            body: fallbackBody,
+            icon: '/image.png',
+            badge: '/image.png',
+            tag: 'daily-summary',
+            data: {
+              url: '/dashboard',
+              timestamp: Date.now(),
+            },
+          });
+          console.log('✅ Fallback notification shown via Service Worker');
+        } else {
+          // Only try direct notification on desktop
+          const fallbackNotification = new Notification(fallbackTitle, {
+            body: fallbackBody,
+            icon: '/image.png',
+            tag: 'daily-summary',
+            requireInteraction: true,
+          });
 
-        fallbackNotification.onclick = function(event) {
-          event.preventDefault();
-          window.focus();
-          window.location.href = '/dashboard';
-          fallbackNotification.close();
-        };
-        console.log('✅ Fallback notification shown via Notification API');
+          fallbackNotification.onclick = function(event) {
+            event.preventDefault();
+            window.focus();
+            window.location.href = '/dashboard';
+            fallbackNotification.close();
+          };
+          console.log('✅ Fallback notification shown via Notification API');
+        }
       } catch (fallbackError) {
         console.error('❌ Failed to send fallback notification:', fallbackError);
-        alert('Lỗi khi gửi thông báo: ' + (fallbackError as Error).message);
+        // Don't alert on mobile as it might be intrusive
+        if (!('serviceWorker' in navigator)) {
+          alert('Lỗi khi gửi thông báo: ' + (fallbackError as Error).message);
+        }
       }
     }
   }
