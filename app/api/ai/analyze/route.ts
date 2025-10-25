@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
-import { openai, AI_MODEL, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
+import { createChatCompletionWithFallback, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -130,21 +130,13 @@ Hãy đưa ra nhận xét CỰC NGẮN GỌN chỉ trong 3 câu:
 Trả lời bằng tiếng Việt, không dùng markdown phức tạp, chỉ text thuần túy có emoji.
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system' as const,
-          content: 'Bạn là cố vấn tài chính. Trả lời CỰC NGẮN GỌN, chỉ 3 câu, dễ hiểu.',
-        },
-        {
-          role: 'user' as const,
-          content: analysisPrompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 200, // Giảm từ 1500 xuống 200 để ngắn hơn
-    });
+    const completion = await createChatCompletionWithFallback(
+      [{ role: 'user', content: analysisPrompt }],
+      {
+        temperature: 0.7,
+        systemMessage: 'Bạn là cố vấn tài chính. Trả lời CỰC NGẮN GỌN, chỉ 3 câu, dễ hiểu.',
+      }
+    );
 
     const aiSummary = completion.choices[0]?.message?.content || 
       'Không thể tạo phân tích lúc này.';

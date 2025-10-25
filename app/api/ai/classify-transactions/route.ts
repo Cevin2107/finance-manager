@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
-import { openai, AI_MODEL } from '@/lib/openai';
+import { createChatCompletionWithFallback } from '@/lib/openai';
 
 interface ParsedTransaction {
   date: string;
@@ -116,20 +116,13 @@ QUY TẮC NGHIÊM NGẶT:
 
 CHỈ TRẢ VỀ JSON ARRAY, KHÔNG THÊM TEXT KHÁC.`;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a financial transaction classifier. You MUST be 100% accurate. Debit = expense, Credit = income. You MUST ONLY use categories from the provided list - never create new ones. If unsure, use "Khác". Always respond with valid JSON only.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.1, // Very low for maximum accuracy
-    });
+    const completion = await createChatCompletionWithFallback(
+      [{ role: 'user', content: prompt }],
+      {
+        temperature: 0.1,
+        systemMessage: 'You are a financial transaction classifier. You MUST be 100% accurate. Debit = expense, Credit = income. You MUST ONLY use categories from the provided list - never create new ones. If unsure, use "Khác". Always respond with valid JSON only.',
+      }
+    );
 
     const responseText = completion.choices[0].message.content || '[]';
     

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
-import { openai, AI_MODEL } from '@/lib/openai';
+import { createChatCompletionWithFallback } from '@/lib/openai';
 
 interface ParsedTransaction {
   date: string;
@@ -91,20 +91,13 @@ QUY TẮC:
 - Nếu không có sender/bank/balance thì để rỗng hoặc 0
 - CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG TEXT GIẢI THÍCH`;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert at parsing bank statements from various formats. Always return valid JSON only. Be extremely accurate in detecting debit (money out) vs credit (money in).',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.1, // Very low for accuracy
-    });
+    const completion = await createChatCompletionWithFallback(
+      [{ role: 'user', content: prompt }],
+      {
+        temperature: 0.1,
+        systemMessage: 'You are an expert at parsing bank statements from various formats. Always return valid JSON only. Be extremely accurate in detecting debit (money out) vs credit (money in).',
+      }
+    );
 
     const responseText = completion.choices[0].message.content || '{}';
     

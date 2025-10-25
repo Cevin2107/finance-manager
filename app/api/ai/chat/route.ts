@@ -4,7 +4,7 @@ import { authOptions } from '@/auth';
 import connectDB from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import Budget from '@/models/Budget';
-import { openai, AI_MODEL, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
+import { createChatCompletionWithFallback, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -94,29 +94,26 @@ Dựa trên dữ liệu trên, hãy trả lời câu hỏi của người dùng.
 `;
     }
 
-    // Gọi OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system' as const,
-          content: FINANCIAL_ADVISOR_PROMPT,
-        },
-        ...(contextMessage
-          ? [
-              {
-                role: 'system' as const,
-                content: contextMessage,
-              },
-            ]
-          : []),
-        {
-          role: 'user' as const,
-          content: message,
-        },
-      ],
+    // Prepare messages
+    const messages: any[] = [
+      ...(contextMessage
+        ? [
+            {
+              role: 'system' as const,
+              content: contextMessage,
+            },
+          ]
+        : []),
+      {
+        role: 'user' as const,
+        content: message,
+      },
+    ];
+
+    // Gọi AI API với fallback
+    const completion = await createChatCompletionWithFallback(messages, {
       temperature: 0.7,
-      max_tokens: 1000,
+      systemMessage: FINANCIAL_ADVISOR_PROMPT,
     });
 
     const aiResponse = completion.choices[0]?.message?.content || 
