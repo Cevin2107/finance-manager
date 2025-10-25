@@ -183,3 +183,95 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+
+// PUT - Cập nhật transaction
+export async function PUT(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id, type, category, amount, description, date } = await req.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Transaction ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!type || !category || !amount) {
+      return NextResponse.json(
+        { error: 'Vui lòng điền đầy đủ thông tin' },
+        { status: 400 }
+      );
+    }
+
+    if (!['income', 'expense'].includes(type)) {
+      return NextResponse.json(
+        { error: 'Loại giao dịch không hợp lệ' },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
+
+    // Parse date với timezone local
+    let transactionDate = new Date();
+    if (date) {
+      if (date.length === 10) {
+        const [year, month, day] = date.split('-').map(Number);
+        const now = new Date();
+        transactionDate = new Date(
+          year,
+          month - 1,
+          day,
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+          now.getMilliseconds()
+        );
+      } else {
+        transactionDate = new Date(date);
+      }
+    }
+
+    const transaction = await Transaction.findOneAndUpdate(
+      {
+        _id: id,
+        userId: session.user.id,
+      },
+      {
+        type,
+        category,
+        amount: parseFloat(amount),
+        description: description || '',
+        date: transactionDate,
+      },
+      { new: true } // Return updated document
+    );
+
+    if (!transaction) {
+      return NextResponse.json(
+        { error: 'Transaction không tồn tại' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Cập nhật giao dịch thành công',
+      transaction,
+    });
+  } catch (error: any) {
+    console.error('PUT transaction error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Đã có lỗi xảy ra' },
+      { status: 500 }
+    );
+  }
+}

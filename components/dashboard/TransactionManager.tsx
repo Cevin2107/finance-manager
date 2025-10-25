@@ -13,6 +13,7 @@ import {
   Search,
   Filter,
   Trash2,
+  Edit,
   TrendingUp,
   TrendingDown,
   Calendar,
@@ -95,6 +96,9 @@ export function TransactionManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   
+  // Edit mode
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  
   // Sorting state
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -108,6 +112,11 @@ export function TransactionManager() {
   const [bulkDeleteStart, setBulkDeleteStart] = useState('');
   const [bulkDeleteEnd, setBulkDeleteEnd] = useState('');
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  // Balance adjustment state
+  const [showBalanceAdjust, setShowBalanceAdjust] = useState(false);
+  const [newBalance, setNewBalance] = useState('');
+  const [isAdjustingBalance, setIsAdjustingBalance] = useState(false);
 
   const [formData, setFormData] = useState({
     type: 'expense' as 'income' | 'expense',
@@ -277,13 +286,21 @@ export function TransactionManager() {
       // parse amount to number
       const amountNumber = parseCurrencyString(formData.amount);
 
-      const payload = {
+      const payload: any = {
         ...formData,
         amount: amountNumber,
       };
 
-      const response = await fetch('/api/transactions', {
-        method: 'POST',
+      // Nếu đang edit thì gọi PUT, không thì POST
+      const url = '/api/transactions';
+      const method = editingTransaction ? 'PUT' : 'POST';
+      
+      if (editingTransaction) {
+        payload.id = editingTransaction._id;
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -294,7 +311,7 @@ export function TransactionManager() {
         throw new Error(data.error || 'Có lỗi xảy ra');
       }
 
-      setSuccess('Thêm giao dịch thành công!');
+      setSuccess(editingTransaction ? 'Cập nhật giao dịch thành công!' : 'Thêm giao dịch thành công!');
       // refresh list and reset form
       await fetchTransactions();
       
@@ -303,6 +320,7 @@ export function TransactionManager() {
       
       resetForm();
       setIsModalOpen(false);
+      setEditingTransaction(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -332,6 +350,18 @@ export function TransactionManager() {
     }
   };
 
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setFormData({
+      type: transaction.type,
+      category: transaction.category,
+      amount: transaction.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+      description: transaction.description || '',
+      date: format(new Date(transaction.date), 'yyyy-MM-dd'),
+    });
+    setIsModalOpen(true);
+  };
+
   const resetForm = () => {
     setFormData({
       type: 'expense',
@@ -340,6 +370,71 @@ export function TransactionManager() {
       description: '',
       date: format(new Date(), 'yyyy-MM-dd'),
     });
+    setEditingTransaction(null);
+  };
+
+  // Calculate current balance
+  const calculateCurrentBalance = () => {
+    return transactions.reduce((balance, t) => {
+      if (t.type === 'income') {
+        return balance + t.amount;
+      } else {
+        return balance - t.amount;
+      }
+    }, 0);
+  };
+
+  const handleBalanceAdjustment = async () => {
+    if (!newBalance) {
+      setError('Vui lòng nhập số dư mới');
+      return;
+    }
+
+    const targetBalance = parseCurrencyString(newBalance);
+    const currentBalance = calculateCurrentBalance();
+    const difference = targetBalance - currentBalance;
+
+    if (difference === 0) {
+      setError('Số dư mới trùng với số dư hiện tại');
+      return;
+    }
+
+    setIsAdjustingBalance(true);
+    try {
+      // Tạo giao dịch điều chỉnh
+      const adjustmentType = difference > 0 ? 'income' : 'expense';
+      const adjustmentAmount = Math.abs(difference);
+
+      const payload = {
+        type: adjustmentType,
+        category: 'Khác',
+        amount: adjustmentAmount,
+        description: `Điều chỉnh số dư (từ ${currentBalance.toLocaleString('vi-VN')}₫ sang ${targetBalance.toLocaleString('vi-VN')}₫)`,
+        date: format(new Date(), 'yyyy-MM-dd'),
+      };
+
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Không thể điều chỉnh số dư');
+      }
+
+      setSuccess(`Đã điều chỉnh số dư thành công! ${difference > 0 ? '+' : ''}${difference.toLocaleString('vi-VN')}₫`);
+      await fetchTransactions();
+      window.dispatchEvent(new Event('transactionAdded'));
+      setShowBalanceAdjust(false);
+      setNewBalance('');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsAdjustingBalance(false);
+    }
   };
 
   const categories = formData.type === 'income' ? incomeCategories : expenseCategories;
@@ -374,7 +469,18 @@ export function TransactionManager() {
           
           {/* Quick Stats */}
           {transactions.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+              <div className="backdrop-blur-md bg-gradient-to-br from-yellow-400/20 to-orange-500/20 dark:from-yellow-600/30 dark:to-orange-600/30 rounded-2xl p-4 border border-white/30 dark:border-yellow-500/30 shadow-lg hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => setShowBalanceAdjust(true)}>
+                <p className="text-yellow-700 dark:text-yellow-300 text-sm mb-1 font-semibold flex items-center gap-2">
+                  💰 Số dư hiện tại
+                  <button className="text-xs px-2 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition">
+                    ✏️ Điều chỉnh
+                  </button>
+                </p>
+                <p className={`text-3xl font-bold ${calculateCurrentBalance() >= 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>
+                  {calculateCurrentBalance().toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
+                </p>
+              </div>
               <div className="backdrop-blur-md bg-green-500/20 dark:bg-green-600/30 rounded-2xl p-4 border border-white/30 dark:border-green-500/30 shadow-lg hover:scale-105 transition-transform duration-300">
                 <p className="text-green-700 dark:text-green-300 text-sm mb-1 font-semibold">📊 Tổng giao dịch</p>
                 <p className="text-3xl font-bold text-green-900 dark:text-green-100">{transactions.length}</p>
@@ -400,10 +506,35 @@ export function TransactionManager() {
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
       {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-      {/* Inline Add Transaction Form (always visible) */}
+      {/* Inline Add/Edit Transaction Form */}
       <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
         <div className="relative p-6">
+          {editingTransaction && (
+            <div className="mb-4 p-4 bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Edit className="text-blue-600 dark:text-blue-400" size={24} />
+                <div>
+                  <p className="font-bold text-blue-900 dark:text-blue-100">Đang chỉnh sửa giao dịch</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    {editingTransaction.category} - {editingTransaction.amount.toLocaleString('vi-VN')}₫
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setEditingTransaction(null);
+                  resetForm();
+                }}
+                className="bg-blue-200 hover:bg-blue-300 dark:bg-blue-800 dark:hover:bg-blue-700"
+              >
+                Hủy chỉnh sửa
+              </Button>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Type selector */}
             <div>
@@ -535,8 +666,17 @@ export function TransactionManager() {
               isLoading={isSubmitting}
               className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
             >
-              <Plus size={20} className="mr-2" />
-              Thêm giao dịch
+              {editingTransaction ? (
+                <>
+                  <Edit size={20} className="mr-2" />
+                  Cập nhật giao dịch
+                </>
+              ) : (
+                <>
+                  <Plus size={20} className="mr-2" />
+                  Thêm giao dịch
+                </>
+              )}
             </Button>
           </form>
         </div>
@@ -654,14 +794,24 @@ export function TransactionManager() {
                       {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toLocaleString('vi-VN')} ₫
                     </p>
                   </div>
-                  <Button 
-                    variant="danger" 
-                    size="sm" 
-                    onClick={() => handleDelete(transaction._id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => handleEdit(transaction)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600"
+                    >
+                      <Edit size={16} />
+                    </Button>
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      onClick={() => handleDelete(transaction._id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -882,6 +1032,77 @@ export function TransactionManager() {
 
         <ModalFooter>
           <Button variant="secondary" onClick={() => setIsCategoryManagerOpen(false)}>Đóng</Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Balance Adjustment Modal */}
+      <Modal isOpen={showBalanceAdjust} onClose={() => setShowBalanceAdjust(false)} title="💰 Điều chỉnh số dư" size="md">
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Số dư hiện tại</p>
+            <p className={`text-3xl font-bold ${calculateCurrentBalance() >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {calculateCurrentBalance().toLocaleString('vi-VN')} ₫
+            </p>
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
+              Nhập số dư mới
+            </label>
+            <div className="relative">
+              <Input
+                placeholder="0"
+                value={newBalance}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const formatted = formatInputToCurrency(raw);
+                  setNewBalance(formatted);
+                }}
+                className="text-2xl font-bold pr-12 border-2"
+                autoFocus
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-lg">
+                ₫
+              </span>
+            </div>
+          </div>
+
+          {newBalance && (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Chênh lệch</p>
+              <p className={`text-2xl font-bold ${(parseCurrencyString(newBalance) - calculateCurrentBalance()) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {(parseCurrencyString(newBalance) - calculateCurrentBalance()) >= 0 ? '+' : ''}{(parseCurrencyString(newBalance) - calculateCurrentBalance()).toLocaleString('vi-VN')} ₫
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {(parseCurrencyString(newBalance) - calculateCurrentBalance()) > 0 
+                  ? '✅ Hệ thống sẽ tạo giao dịch THU NHẬP để cân bằng số dư'
+                  : (parseCurrencyString(newBalance) - calculateCurrentBalance()) < 0
+                    ? '⚠️ Hệ thống sẽ tạo giao dịch CHI TIÊU để cân bằng số dư'
+                    : '⚪ Số dư không thay đổi'
+                }
+              </p>
+            </div>
+          )}
+        </div>
+
+        <ModalFooter>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setShowBalanceAdjust(false);
+              setNewBalance('');
+            }}
+          >
+            Hủy
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleBalanceAdjustment}
+            isLoading={isAdjustingBalance}
+            className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700"
+          >
+            ✏️ Xác nhận điều chỉnh
+          </Button>
         </ModalFooter>
       </Modal>
     </div>

@@ -20,12 +20,14 @@ import {
   Sun,
   Moon,
   Monitor,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Giao dịch', href: '/dashboard/transactions', icon: Receipt },
+  { name: 'Import sao kê', href: '/dashboard/import', icon: FileSpreadsheet },
   { name: 'Tiết kiệm', href: '/dashboard/budget', icon: PiggyBank },
   { name: 'Báo cáo', href: '/dashboard/reports', icon: BarChart3 },
 ];
