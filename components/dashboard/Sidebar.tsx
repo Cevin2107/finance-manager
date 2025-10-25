@@ -57,21 +57,33 @@ export function Sidebar() {
   const [isLoadingNotification, setIsLoadingNotification] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
+  const [notificationTime, setNotificationTime] = useState({ hour: 7, minute: 0 });
+  const [tempNotificationTime, setTempNotificationTime] = useState({ hour: 7, minute: 0 });
+  const [hasTimeChanged, setHasTimeChanged] = useState(false);
 
   // Check notification permission on mount
   useEffect(() => {
     if ('Notification' in window && 'serviceWorker' in navigator) {
       const saved = localStorage.getItem('notificationsEnabled');
+      const savedTime = localStorage.getItem('notificationTime');
+      
+      if (savedTime) {
+        const [hour, minute] = savedTime.split(':').map(Number);
+        setNotificationTime({ hour, minute });
+        setTempNotificationTime({ hour, minute });
+      }
+      
       setNotificationsEnabled(saved === 'true' && Notification.permission === 'granted');
       
       // Schedule daily notifications if enabled
       if (saved === 'true' && Notification.permission === 'granted') {
+        const [hour, minute] = savedTime ? savedTime.split(':').map(Number) : [7, 0];
         import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
-          // Schedule for 7:00 AM daily
-          NotificationScheduler.scheduleDaily(7, 0, () => {
+          // Schedule for saved time
+          NotificationScheduler.scheduleDaily(hour, minute, () => {
             NotificationScheduler.sendDailyNotification();
           });
-          console.log('Daily notifications scheduled for 7:00 AM');
+          console.log(`Daily notifications scheduled for ${hour}:${String(minute).padStart(2, '0')}`);
         });
       }
     }
@@ -150,33 +162,33 @@ export function Sidebar() {
         localStorage.setItem('notificationsEnabled', 'true');
         setNotificationsEnabled(true);
         
-        // Schedule daily notifications
+        // Schedule daily notifications with user-selected time
         import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
-          NotificationScheduler.scheduleDaily(7, 0, () => {
+          NotificationScheduler.scheduleDaily(tempNotificationTime.hour, tempNotificationTime.minute, () => {
             NotificationScheduler.sendDailyNotification();
           });
-          console.log('Daily notifications scheduled for 7:00 AM');
+          console.log(`Daily notifications scheduled for ${tempNotificationTime.hour}:${String(tempNotificationTime.minute).padStart(2, '0')}`);
         });
         
         // Show test notification using Service Worker
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then(async (registration) => {
             await registration.showNotification('🎉 Thông báo đã bật!', {
-              body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+              body: `Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc ${tempNotificationTime.hour}:${String(tempNotificationTime.minute).padStart(2, '0')}`,
               icon: '/image.png',
             });
           }).catch(err => {
             console.error('Failed to show notification:', err);
             // Fallback if service worker not available
             new Notification('🎉 Thông báo đã bật!', {
-              body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+              body: `Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc ${tempNotificationTime.hour}:${String(tempNotificationTime.minute).padStart(2, '0')}`,
               icon: '/image.png',
             });
           });
         } else {
           // Fallback for browsers without service worker
           new Notification('🎉 Thông báo đã bật!', {
-            body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+            body: `Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc ${tempNotificationTime.hour}:${String(tempNotificationTime.minute).padStart(2, '0')}`,
             icon: '/image.png',
           });
         }
@@ -247,6 +259,92 @@ export function Sidebar() {
       setIsLoadingNotification(false);
       console.log('Toggle complete');
     }
+  };
+
+  const saveNotificationTime = () => {
+    // Save the new time
+    setNotificationTime(tempNotificationTime);
+    localStorage.setItem('notificationTime', `${tempNotificationTime.hour}:${tempNotificationTime.minute}`);
+    setHasTimeChanged(false);
+    
+    // Reschedule notifications
+    import('@/lib/notification-scheduler').then(({ NotificationScheduler }) => {
+      NotificationScheduler.scheduleDaily(tempNotificationTime.hour, tempNotificationTime.minute, () => {
+        NotificationScheduler.sendDailyNotification();
+      });
+      console.log(`Rescheduled for ${tempNotificationTime.hour}:${String(tempNotificationTime.minute).padStart(2, '0')}`);
+    });
+    
+    // Show confirmation
+    alert(`✅ Đã lưu! Thông báo sẽ gửi hàng ngày lúc ${String(tempNotificationTime.hour).padStart(2, '0')}:${String(tempNotificationTime.minute).padStart(2, '0')}`);
+  };
+
+  const testNotification = async () => {
+    if (!notificationsEnabled) {
+      alert('Vui lòng bật thông báo trước');
+      return;
+    }
+
+    console.log('🧪 Testing notification...');
+    console.log('Permission:', Notification.permission);
+
+    // Test 1: Simple direct notification first
+    try {
+      console.log('Test 1: Direct Notification API');
+      const testNotif = new Notification('🧪 Test thông báo', {
+        body: 'Đây là thông báo test đơn giản',
+        icon: '/image.png',
+      });
+      console.log('✅ Direct notification created:', testNotif);
+      
+      testNotif.onclick = () => {
+        console.log('Notification clicked!');
+        testNotif.close();
+      };
+      
+      // Wait a bit then try the full AI notification
+      setTimeout(async () => {
+        console.log('Test 2: Full AI notification');
+        try {
+          const { NotificationScheduler } = await import('@/lib/notification-scheduler');
+          await NotificationScheduler.sendDailyNotification();
+          console.log('✅ AI notification sent');
+        } catch (error) {
+          console.error('❌ AI notification error:', error);
+          alert('Lỗi khi gửi thông báo AI: ' + (error as Error).message);
+        }
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Direct notification error:', error);
+      alert('Lỗi khi tạo thông báo: ' + (error as Error).message);
+    }
+  };
+
+  const checkSchedule = async () => {
+    const { NotificationScheduler } = await import('@/lib/notification-scheduler');
+    const info = NotificationScheduler.getScheduleInfo();
+    
+    if (!info) {
+      alert('Không có lịch thông báo nào được đặt');
+      return;
+    }
+
+    const status = info.isActive ? '✅ Đang hoạt động' : '❌ Không hoạt động';
+    const timeInfo = info.isPast 
+      ? 'Đã qua (cần reschedule)' 
+      : `Còn ${info.timeUntilMinutes} phút nữa`;
+
+    alert(
+      `📅 Thông tin lịch thông báo:\n\n` +
+      `Trạng thái: ${status}\n` +
+      `Thời gian đặt: ${new Date(info.setAt).toLocaleString('vi-VN')}\n` +
+      `Thời gian gửi: ${new Date(info.scheduledTime).toLocaleString('vi-VN')}\n` +
+      `${timeInfo}\n\n` +
+      `(Mở console để xem chi tiết)`
+    );
+    
+    console.log('📅 Schedule info:', info);
   };
 
   const handleSignOut = () => {
@@ -440,6 +538,91 @@ export function Sidebar() {
                       )} />
                     </div>
                   </button>
+
+                  {/* Notification Time Selector - Only show if notifications enabled */}
+                  {notificationsEnabled && (
+                    <div className="px-4 py-3 bg-gray-50 dark:bg-[#2a2a2a] border-t border-gray-200 dark:border-gray-800">
+                      <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">
+                        ⏰ Thời gian nhận thông báo hàng ngày
+                      </label>
+                      <div className="flex gap-2 mb-3">
+                        <select
+                          value={tempNotificationTime.hour}
+                          onChange={(e) => {
+                            const newHour = Number(e.target.value);
+                            setTempNotificationTime({ ...tempNotificationTime, hour: newHour });
+                            setHasTimeChanged(
+                              newHour !== notificationTime.hour || 
+                              tempNotificationTime.minute !== notificationTime.minute
+                            );
+                          }}
+                          className="flex-1 px-3 py-2 bg-white dark:bg-[#1e1e1e] border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <option key={i} value={i}>
+                              {String(i).padStart(2, '0')} giờ
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={tempNotificationTime.minute}
+                          onChange={(e) => {
+                            const newMinute = Number(e.target.value);
+                            setTempNotificationTime({ ...tempNotificationTime, minute: newMinute });
+                            setHasTimeChanged(
+                              tempNotificationTime.hour !== notificationTime.hour || 
+                              newMinute !== notificationTime.minute
+                            );
+                          }}
+                          className="flex-1 px-3 py-2 bg-white dark:bg-[#1e1e1e] border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <option key={i} value={i}>
+                              {String(i).padStart(2, '0')} phút
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {hasTimeChanged ? (
+                            <span className="text-amber-600 dark:text-amber-400">⚠️ Chưa lưu</span>
+                          ) : (
+                            <span>✓ Đã lưu: {String(notificationTime.hour).padStart(2, '0')}:{String(notificationTime.minute).padStart(2, '0')}</span>
+                          )}
+                        </p>
+                        <button
+                          onClick={saveNotificationTime}
+                          disabled={!hasTimeChanged}
+                          className={clsx(
+                            'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                            hasTimeChanged
+                              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
+                              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                          )}
+                        >
+                          {hasTimeChanged ? '💾 Lưu' : '✓ Đã lưu'}
+                        </button>
+                      </div>
+
+                      {/* Test Notification Button */}
+                      <button
+                        onClick={testNotification}
+                        className="w-full px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg text-xs font-medium transition-all shadow-sm mb-2"
+                      >
+                        🔔 Test thông báo ngay
+                      </button>
+
+                      {/* Check Schedule Button */}
+                      <button
+                        onClick={checkSchedule}
+                        className="w-full px-3 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg text-xs font-medium transition-all shadow-sm"
+                      >
+                        📅 Kiểm tra lịch thông báo
+                      </button>
+                    </div>
+                  )}
                   
                   <button
                     onClick={handleSignOut}

@@ -121,6 +121,7 @@ CHỈ TRẢ VỀ JSON ARRAY, KHÔNG THÊM TEXT KHÁC.`;
       {
         temperature: 0.1,
         systemMessage: 'You are a financial transaction classifier. You MUST be 100% accurate. Debit = expense, Credit = income. You MUST ONLY use categories from the provided list - never create new ones. If unsure, use "Khác". Always respond with valid JSON only.',
+        skipFallback: true, // Disable auto-fallback for import feature
       }
     );
 

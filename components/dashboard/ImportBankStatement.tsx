@@ -89,13 +89,15 @@ export function ImportBankStatement() {
         throw new Error('File Excel không có dữ liệu hoặc chỉ có header');
       }
 
-      // Send to AI to auto-detect format and parse
+      console.log(`📊 Sending ${allData.length} rows to AI for parsing...`);
+
+      // Send ALL data to AI (API will use first 20 for structure detection, then parse all)
       const response = await fetch('/api/ai/parse-bank-statement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          data: allData.slice(0, 50), // Send first 50 rows for analysis
+          data: allData, // Send ALL data
         }),
       });
 
@@ -114,13 +116,35 @@ export function ImportBankStatement() {
           }
         }
 
-        console.error('API Error:', errorData);
+        console.error('❌ Parse API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+        
+        // Check if it's a rate limit error and OpenAI is available
+        if (errorData?.isRateLimit && errorData?.canRetryWithOpenAI) {
+          const useOpenAI = window.confirm(
+            `⚠️ Groq API đã đạt giới hạn sử dụng.\n\n` +
+            `${errorData.suggestion}\n\n` +
+            `Bạn có muốn thử lại với OpenAI API không?\n` +
+            `(OpenAI có thể mất phí nhưng chậm hơn Groq)`
+          );
+          
+          if (useOpenAI) {
+            // Retry with OpenAI by setting a flag
+            setError('Đang thử lại với OpenAI API...');
+            // TODO: Implement retry with OpenAI
+            throw new Error('Tính năng retry với OpenAI đang được phát triển. Vui lòng đợi Groq reset (~30 phút).');
+          }
+        }
+        
         const message =
           errorData?.details ||
           errorData?.suggestion ||
           errorData?.error ||
           errorData?.message ||
-          'AI không thể phân tích file';
+          `AI không thể phân tích file (Status: ${response.status})`;
         throw new Error(message);
       }
 

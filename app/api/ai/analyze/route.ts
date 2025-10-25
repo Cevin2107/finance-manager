@@ -6,13 +6,19 @@ import Transaction from '@/models/Transaction';
 import { createChatCompletionWithFallback, FINANCIAL_ADVISOR_PROMPT } from '@/lib/openai';
 
 export async function POST(req: NextRequest) {
+  console.log('📊 AI Analyze API called');
+  
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
+      console.log('❌ Unauthorized - no session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log('✅ Session OK, user:', session.user.email);
+
     await connectDB();
+    console.log('✅ DB connected');
 
     // Xác định period phân tích: tuần hoặc tháng
     const today = new Date();
@@ -43,7 +49,10 @@ export async function POST(req: NextRequest) {
       .sort({ date: -1 })
       .lean();
 
+    console.log(`📋 Found ${transactions.length} transactions in ${periodLabel}`);
+
     if (transactions.length === 0) {
+      console.log('⚠️ No transactions found, returning default message');
       return NextResponse.json({
         summary: `Chưa có giao dịch nào trong ${periodLabel}. Hãy thêm giao dịch để nhận được insights từ AI!`,
         stats: {
@@ -130,6 +139,8 @@ Hãy đưa ra nhận xét CỰC NGẮN GỌN chỉ trong 3 câu:
 Trả lời bằng tiếng Việt, không dùng markdown phức tạp, chỉ text thuần túy có emoji.
 `;
 
+    console.log('🤖 Calling AI for analysis...');
+
     const completion = await createChatCompletionWithFallback(
       [{ role: 'user', content: analysisPrompt }],
       {
@@ -138,8 +149,12 @@ Trả lời bằng tiếng Việt, không dùng markdown phức tạp, chỉ tex
       }
     );
 
+    console.log('✅ AI response received');
+
     const aiSummary = completion.choices[0]?.message?.content || 
       'Không thể tạo phân tích lúc này.';
+
+    console.log('📤 Sending response to client');
 
     return NextResponse.json({
       summary: aiSummary,
