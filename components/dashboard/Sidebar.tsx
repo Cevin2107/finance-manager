@@ -93,7 +93,8 @@ export function Sidebar() {
     if (window.matchMedia) {
       mql = window.matchMedia('(prefers-color-scheme: dark)');
       const handler = (e: MediaQueryListEvent) => {
-        if (themeMode === 'system') {
+        const currentTheme = localStorage.getItem('theme') || 'system';
+        if (currentTheme === 'system') {
           const dark = e.matches;
           document.documentElement.classList.toggle('dark', dark);
           setIsDarkMode(dark);
@@ -104,7 +105,7 @@ export function Sidebar() {
         mql && mql.removeEventListener('change', handler);
       };
     }
-  }, [themeMode]);
+  }, []);
 
   const setTheme = (mode: 'light' | 'dark' | 'system') => {
     try {
