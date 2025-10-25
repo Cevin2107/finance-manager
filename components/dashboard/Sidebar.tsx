@@ -106,11 +106,28 @@ export function Sidebar() {
           console.log('Daily notifications scheduled for 7:00 AM');
         });
         
-        // Show test notification (simple version without service worker)
-        new Notification('🎉 Thông báo đã bật!', {
-          body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
-          icon: '/image.png',
-        });
+        // Show test notification using Service Worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(async (registration) => {
+            await registration.showNotification('🎉 Thông báo đã bật!', {
+              body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+              icon: '/image.png',
+            });
+          }).catch(err => {
+            console.error('Failed to show notification:', err);
+            // Fallback if service worker not available
+            new Notification('🎉 Thông báo đã bật!', {
+              body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+              icon: '/image.png',
+            });
+          });
+        } else {
+          // Fallback for browsers without service worker
+          new Notification('🎉 Thông báo đã bật!', {
+            body: 'Bạn sẽ nhận được tóm tắt AI Insight mỗi ngày lúc 7:00 sáng',
+            icon: '/image.png',
+          });
+        }
         
         // Try to register with service worker if available (optional)
         if ('serviceWorker' in navigator) {

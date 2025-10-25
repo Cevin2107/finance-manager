@@ -5,6 +5,14 @@
   --foreground: 23 23 23;
 }
 
+/* Dark mode for mobile and desktop */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 15 23 42; /* slate-900 */
+    --foreground: 248 250 252; /* slate-50 */
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

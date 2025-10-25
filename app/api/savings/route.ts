@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, targetAmount, targetDate, description, color } = await req.json();
+    const { name, targetAmount, targetDate, description, color, savingType } = await req.json();
 
     if (!name || !targetAmount || !targetDate) {
       return NextResponse.json(
@@ -62,7 +62,9 @@ export async function POST(req: NextRequest) {
       targetDate: new Date(targetDate),
       description: description || '',
       color: color || '#3B82F6',
+      savingType: savingType || 'accumulative',
       currentAmount: 0,
+      hasDeposited: false,
     });
 
     return NextResponse.json(
@@ -121,7 +123,20 @@ export async function PATCH(req: NextRequest) {
     const amountValue = parseFloat(amount);
     
     if (type === 'deposit') {
+      // Check if long-term saving has already been deposited
+      if (saving.savingType === 'long-term' && saving.hasDeposited) {
+        return NextResponse.json(
+          { error: 'Tiết kiệm dài hạn chỉ được nạp 1 lần duy nhất' },
+          { status: 400 }
+        );
+      }
+      
       saving.currentAmount += amountValue;
+      
+      // Mark long-term saving as deposited
+      if (saving.savingType === 'long-term') {
+        saving.hasDeposited = true;
+      }
     } else if (type === 'withdraw') {
       if (saving.currentAmount < amountValue) {
         return NextResponse.json(
@@ -129,6 +144,20 @@ export async function PATCH(req: NextRequest) {
           { status: 400 }
         );
       }
+      
+      // Check if long-term saving can be withdrawn
+      if (saving.savingType === 'long-term') {
+        const now = new Date();
+        const targetDate = new Date(saving.targetDate);
+        
+        if (now < targetDate) {
+          return NextResponse.json(
+            { error: `Tiết kiệm dài hạn chỉ được rút khi đến hạn (${targetDate.toLocaleDateString('vi-VN')})` },
+            { status: 400 }
+          );
+        }
+      }
+      
       saving.currentAmount -= amountValue;
     }
 

@@ -66,49 +66,84 @@ export class NotificationScheduler {
 
       const data = await response.json();
 
-      const notification = new Notification('☀️ Tóm tắt tài chính hôm nay', {
-        body: data.summary || 'Kiểm tra tài chính của bạn hôm nay!',
-        icon: '/image.png',
-        badge: '/image.png',
-        tag: 'daily-summary',
-        requireInteraction: true,
-        data: {
-          url: '/dashboard',
-          timestamp: Date.now(),
-        },
-      });
+      // Use Service Worker registration if available, otherwise fall back to direct Notification
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification('☀️ Tóm tắt tài chính hôm nay', {
+          body: data.summary || 'Kiểm tra tài chính của bạn hôm nay!',
+          icon: '/image.png',
+          badge: '/image.png',
+          tag: 'daily-summary',
+          requireInteraction: true,
+          data: {
+            url: '/dashboard',
+            timestamp: Date.now(),
+          },
+        });
+      } else {
+        // Fallback for browsers without service worker
+        const notification = new Notification('☀️ Tóm tắt tài chính hôm nay', {
+          body: data.summary || 'Kiểm tra tài chính của bạn hôm nay!',
+          icon: '/image.png',
+          badge: '/image.png',
+          tag: 'daily-summary',
+          requireInteraction: true,
+          data: {
+            url: '/dashboard',
+            timestamp: Date.now(),
+          },
+        });
 
-      notification.onclick = function(event) {
-        event.preventDefault();
-        window.focus();
-        if (notification.data?.url) {
-          window.location.href = notification.data.url;
-        }
-        notification.close();
-      };
+        notification.onclick = function(event) {
+          event.preventDefault();
+          window.focus();
+          if (notification.data?.url) {
+            window.location.href = notification.data.url;
+          }
+          notification.close();
+        };
+      }
 
       console.log('Daily notification sent at:', new Date().toLocaleString('vi-VN'));
     } catch (error) {
       console.error('Failed to send daily notification:', error);
       
       // Send a fallback notification even if AI fails
-      const fallbackNotification = new Notification('☀️ Nhắc nhở tài chính', {
-        body: 'Hãy kiểm tra thu chi của bạn hôm nay!',
-        icon: '/image.png',
-        badge: '/image.png',
-        tag: 'daily-summary',
-        data: {
-          url: '/dashboard',
-          timestamp: Date.now(),
-        },
-      });
+      try {
+        if ('serviceWorker' in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          await registration.showNotification('☀️ Nhắc nhở tài chính', {
+            body: 'Hãy kiểm tra thu chi của bạn hôm nay!',
+            icon: '/image.png',
+            badge: '/image.png',
+            tag: 'daily-summary',
+            data: {
+              url: '/dashboard',
+              timestamp: Date.now(),
+            },
+          });
+        } else {
+          const fallbackNotification = new Notification('☀️ Nhắc nhở tài chính', {
+            body: 'Hãy kiểm tra thu chi của bạn hôm nay!',
+            icon: '/image.png',
+            badge: '/image.png',
+            tag: 'daily-summary',
+            data: {
+              url: '/dashboard',
+              timestamp: Date.now(),
+            },
+          });
 
-      fallbackNotification.onclick = function(event) {
-        event.preventDefault();
-        window.focus();
-        window.location.href = '/dashboard';
-        fallbackNotification.close();
-      };
+          fallbackNotification.onclick = function(event) {
+            event.preventDefault();
+            window.focus();
+            window.location.href = '/dashboard';
+            fallbackNotification.close();
+          };
+        }
+      } catch (fallbackError) {
+        console.error('Failed to send fallback notification:', fallbackError);
+      }
     }
   }
 }

@@ -27,6 +27,8 @@ interface Saving {
   targetDate: string;
   description: string;
   color: string;
+  savingType: 'accumulative' | 'long-term';
+  hasDeposited: boolean;
 }
 
 const COLORS = [
@@ -56,6 +58,7 @@ export function SavingsManager() {
     targetDate: '',
     description: '',
     color: COLORS[0],
+    savingType: 'accumulative' as 'accumulative' | 'long-term',
   });
 
   const [transactionData, setTransactionData] = useState({
@@ -179,6 +182,7 @@ export function SavingsManager() {
       targetDate: '',
       description: '',
       color: COLORS[0],
+      savingType: 'accumulative',
     });
   };
 
@@ -263,10 +267,10 @@ export function SavingsManager() {
           const isCompleted = progress >= 100;
 
           return (
-            <Card key={saving._id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0">
+            <Card key={saving._id} className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-0 rounded-3xl">
               {/* Gradient Header */}
               <div
-                className="h-32 relative"
+                className="h-32 relative rounded-t-3xl"
                 style={{
                   background: `linear-gradient(135deg, ${saving.color}dd, ${saving.color})`
                 }}
@@ -276,7 +280,7 @@ export function SavingsManager() {
                 {/* Delete Button */}
                 <button
                   onClick={() => handleDelete(saving._id)}
-                  className="absolute top-3 right-3 w-8 h-8 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                  className="absolute top-3 right-3 w-8 h-8 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
                 >
                   <Trash2 size={16} className="text-white" />
                 </button>
@@ -300,9 +304,22 @@ export function SavingsManager() {
                   </div>
                 </div>
 
+                {/* Saving Type Badge */}
+                <div className="absolute top-3 left-3">
+                  {saving.savingType === 'long-term' ? (
+                    <div className="bg-purple-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                      🔒 Dài hạn
+                    </div>
+                  ) : (
+                    <div className="bg-blue-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
+                      💎 Tích lũy
+                    </div>
+                  )}
+                </div>
+
                 {/* Completion Badge */}
                 {isCompleted && (
-                  <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <div className="absolute top-12 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
                     <Target size={12} />
                     Hoàn thành!
                   </div>
@@ -388,10 +405,12 @@ export function SavingsManager() {
                       setTransactionData({ amount: '', type: 'deposit' });
                       setIsTransactionModalOpen(true);
                     }}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
+                    disabled={saving.savingType === 'long-term' && saving.hasDeposited}
+                    title={saving.savingType === 'long-term' && saving.hasDeposited ? 'Tiết kiệm dài hạn chỉ được nạp 1 lần' : ''}
                   >
                     <TrendingUp size={18} className="mr-1" />
-                    Nạp tiền
+                    {saving.savingType === 'long-term' && saving.hasDeposited ? 'Đã nạp' : 'Nạp tiền'}
                   </Button>
                   <Button
                     variant="secondary"
@@ -401,8 +420,18 @@ export function SavingsManager() {
                       setTransactionData({ amount: '', type: 'withdraw' });
                       setIsTransactionModalOpen(true);
                     }}
-                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400"
-                    disabled={saving.currentAmount === 0}
+                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
+                    disabled={
+                      saving.currentAmount === 0 || 
+                      (saving.savingType === 'long-term' && getDaysLeft(saving.targetDate) > 0)
+                    }
+                    title={
+                      saving.currentAmount === 0 
+                        ? 'Không có tiền để rút' 
+                        : saving.savingType === 'long-term' && getDaysLeft(saving.targetDate) > 0
+                        ? 'Tiết kiệm dài hạn chỉ được rút khi đến hạn'
+                        : ''
+                    }
                   >
                     <TrendingDown size={18} className="mr-1" />
                     Rút tiền
@@ -456,6 +485,44 @@ export function SavingsManager() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+              Loại tiết kiệm
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, savingType: 'accumulative' })}
+                className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
+                  formData.savingType === 'accumulative'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                }`}
+              >
+                <div className="text-3xl mb-2">💎</div>
+                <div className="font-bold text-gray-900 dark:text-gray-100 mb-1">Tích lũy</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  Có thể nạp và rút nhiều lần
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, savingType: 'long-term' })}
+                className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
+                  formData.savingType === 'long-term'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                }`}
+              >
+                <div className="text-3xl mb-2">🔒</div>
+                <div className="font-bold text-gray-900 dark:text-gray-100 mb-1">Dài hạn</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  Nạp 1 lần, rút khi đến hạn
+                </div>
+              </button>
+            </div>
           </div>
 
           <div>
@@ -538,10 +605,33 @@ export function SavingsManager() {
             <p className="font-bold text-gray-900 dark:text-gray-100">
               {selectedSaving?.name}
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              {selectedSaving?.savingType === 'long-term' ? (
+                <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">
+                  🔒 Dài hạn
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold px-2 py-1 rounded-full">
+                  💎 Tích lũy
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
               Số dư hiện tại: {selectedSaving?.currentAmount.toLocaleString('vi-VN')} ₫
             </p>
           </div>
+
+          {/* Show warning for long-term savings */}
+          {selectedSaving?.savingType === 'long-term' && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+                ⚠️ {transactionData.type === 'deposit' 
+                  ? 'Lưu ý: Tiết kiệm dài hạn chỉ được nạp 1 lần duy nhất' 
+                  : `Lưu ý: Chỉ được rút khi đến hạn (${selectedSaving?.targetDate ? new Date(selectedSaving.targetDate).toLocaleDateString('vi-VN') : ''})`
+                }
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">

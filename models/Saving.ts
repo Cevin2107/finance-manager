@@ -31,6 +31,15 @@ const SavingSchema = new mongoose.Schema(
       type: String,
       default: '#3B82F6',
     },
+    savingType: {
+      type: String,
+      enum: ['accumulative', 'long-term'], // 'accumulative' = tích lũy (có thể nạp/rút), 'long-term' = dài hạn (chỉ nạp 1 lần)
+      default: 'accumulative',
+    },
+    hasDeposited: {
+      type: Boolean,
+      default: false, // Track if long-term saving has already been deposited
+    },
   },
   {
     timestamps: true,
