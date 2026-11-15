@@ -1,88 +1,23 @@
-# PWA Installation Guide - FinanceApp
+# Cài đặt Sổ Thu Chi
 
-## 📱 Cách cài đặt PWA lên Android
+Sổ Thu Chi có thể được cài như một ứng dụng web trên điện thoại hoặc máy tính.
 
-### Bước 1: Mở trình duyệt Chrome trên điện thoại Android
-- Truy cập vào URL ứng dụng của bạn (ví dụ: https://your-app.vercel.app)
+## Android
 
-### Bước 2: Thêm vào màn hình chính
-Có 2 cách:
+1. Mở ứng dụng bằng Chrome.
+2. Mở menu trình duyệt và chọn **Thêm vào màn hình chính** hoặc **Cài đặt ứng dụng**.
+3. Xác nhận để tạo biểu tượng Sổ Thu Chi trên màn hình chính.
 
-**Cách 1 - Từ thanh địa chỉ:**
-1. Nhấn vào biểu tượng **3 chấm** ở góc trên bên phải
-2. Chọn **"Thêm vào màn hình chính"** (Add to Home screen)
-3. Đặt tên cho app (mặc định là "FinanceApp")
-4. Nhấn **"Thêm"**
+## iPhone hoặc iPad
 
-**Cách 2 - Từ banner tự động:**
-1. Khi mở app lần đầu, sẽ xuất hiện banner ở dưới cùng
-2. Nhấn **"Cài đặt"** hoặc **"Install"**
-3. Xác nhận cài đặt
+1. Mở ứng dụng bằng Safari.
+2. Chọn nút **Chia sẻ** rồi chọn **Thêm vào màn hình chính**.
+3. Xác nhận tên và chọn **Thêm**.
 
-### Bước 3: Sử dụng app
-- App sẽ xuất hiện trên màn hình chính với icon `/image.png`
-- Mở app như một ứng dụng native
-- App hoạt động cả khi **offline** (nhờ Service Worker)
+## Lưu ý về dữ liệu
 
-## ✨ Tính năng PWA
+Dữ liệu được đồng bộ lên Supabase bằng danh tính ẩn danh của trình duyệt hiện tại. Không có đăng nhập để chuyển danh tính giữa thiết bị. Xóa dữ liệu trang web có thể làm mất danh tính ẩn danh và quyền truy cập vào dữ liệu tương ứng.
 
-✅ **Hoạt động offline** - Xem dữ liệu đã cache khi mất mạng
-✅ **Cài đặt như app native** - Không cần Google Play Store
-✅ **Icon trên màn hình chính** - Dùng icon `/image.png`
-✅ **Fullscreen mode** - Không có thanh địa chỉ trình duyệt
-✅ **Fast loading** - Cache files tĩnh
-✅ **Shortcuts** - Truy cập nhanh vào các trang chính
-✅ **Push notifications** (sẵn sàng cho tương lai)
+## Kiểm tra bản PWA
 
-## 🚀 Deploy lên Vercel
-
-```bash
-# Build và deploy
-npm run build
-vercel --prod
-```
-
-Sau khi deploy, URL production sẽ tự động có PWA hoạt động!
-
-## 📋 Checklist PWA
-
-- [x] manifest.json với icons và metadata
-- [x] Service Worker (sw.js) cho offline support
-- [x] Meta tags cho mobile web app
-- [x] Apple touch icon
-- [x] Theme color
-- [x] Standalone display mode
-- [x] Shortcuts cho quick actions
-
-## 🔧 Testing PWA
-
-1. **Chrome DevTools:**
-   - F12 → Application → Manifest
-   - Application → Service Workers
-   - Lighthouse → Generate PWA report
-
-2. **Mobile Testing:**
-   - Dùng Chrome Remote Debugging
-   - Hoặc test trực tiếp trên điện thoại Android
-
-## 📊 PWA Score
-
-Chạy Lighthouse để kiểm tra:
-```bash
-npx lighthouse https://your-app.vercel.app --view
-```
-
-Mục tiêu: 
-- Performance: 90+
-- Accessibility: 90+
-- Best Practices: 90+
-- SEO: 90+
-- PWA: ✅ Installable
-
-## 🎯 Next Steps
-
-- [ ] Thêm push notifications thực tế
-- [ ] Optimize caching strategy
-- [ ] Thêm background sync
-- [ ] Custom install prompt
-- [ ] Analytics cho PWA installs
+Ứng dụng cần được mở qua HTTPS khi cài từ môi trường production. Có thể kiểm tra manifest và service worker trong Chrome DevTools → **Application**.

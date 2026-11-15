@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import Script from "next/script";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,22 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FinanceApp - Quản lý tài chính cá nhân",
-  description: "Ứng dụng quản lý tài chính thông minh, hiện đại và dễ sử dụng",
+  title: "Sổ Thu Chi - Quản lý tài chính cá nhân",
+  description: "Theo dõi thu chi, ngân sách và mục tiêu tiết kiệm của bạn.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "FinanceApp",
+    title: "Sổ Thu Chi",
   },
-  applicationName: "FinanceApp",
-  themeColor: "#3B82F6",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+  applicationName: "Sổ Thu Chi",
   icons: {
     icon: [
       { url: "/image.png", sizes: "any", type: "image/png" },
@@ -41,6 +34,13 @@ export const metadata: Metadata = {
     ],
     shortcut: "/image.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#047857",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -58,15 +58,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="FinanceApp" />
         <link rel="apple-touch-icon" href="/image.png" />
         <link rel="icon" type="image/png" href="/image.png" />
-        {/* Initialize theme before the app renders to avoid flash */}
-        <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{var k='theme';var c='dark';var d=document.documentElement;var s=localStorage.getItem(k);var sys=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var t=s||'system';if(t==='dark'||(t==='system'&&sys)){d.classList.add(c);}else{d.classList.remove(c);}}catch(e){}})();`}
-        </Script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

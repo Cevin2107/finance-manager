@@ -1,678 +1,252 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal, ModalFooter } from '@/components/ui/Modal';
-import { Alert } from '@/components/ui/Alert';
-import { Loading } from '@/components/ui/Loading';
+import { useState, type FormEvent } from 'react';
+import { CalendarDays, Coins, Plus, Target, Trash2, X } from 'lucide-react';
+import { createId, type SavingsGoal, useFinanceData } from '@/lib/finance-store';
 import {
-  Plus,
-  PiggyBank,
-  TrendingUp,
-  TrendingDown,
-  Target,
-  Calendar,
-  Trash2,
-  Edit,
-} from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+  EmptyState,
+  formatMoney,
+  inputClassName,
+  PageHeader,
+  primaryButtonClassName,
+} from '@/components/dashboard/FinanceUI';
+import { MoneyInput } from '@/components/dashboard/MoneyInput';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/ToastProvider';
 
-interface Saving {
-  _id: string;
-  name: string;
-  targetAmount: number;
-  currentAmount: number;
-  targetDate: string;
-  description: string;
-  color: string;
-  savingType: 'accumulative' | 'long-term';
-  hasDeposited: boolean;
-}
-
-const COLORS = [
-  '#3B82F6', // Blue
-  '#10B981', // Green
-  '#F59E0B', // Yellow
-  '#EF4444', // Red
-  '#8B5CF6', // Purple
-  '#EC4899', // Pink
-  '#14B8A6', // Teal
-  '#F97316', // Orange
-];
+const today = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
 
 export function SavingsManager() {
-  const [savings, setSavings] = useState<Saving[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [selectedSaving, setSelectedSaving] = useState<Saving | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { goals, updateFinanceData } = useFinanceData();
+  const notify = useToast();
+  const [isGoalOpen, setIsGoalOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<SavingsGoal | null>(null);
+  const [goalToDelete, setGoalToDelete] = useState<SavingsGoal | null>(null);
+  const [amount, setAmount] = useState(0);
+  const [transactionType, setTransactionType] = useState<'deposit' | 'withdraw'>('deposit');
+  const [form, setForm] = useState({ name: '', targetAmount: 0, targetDate: '', description: '' });
+  const totalSaved = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+  const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+  const overallProgress = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
 
-  const [formData, setFormData] = useState({
-    name: '',
-    targetAmount: '',
-    targetDate: '',
-    description: '',
-    color: COLORS[0],
-    savingType: 'accumulative' as 'accumulative' | 'long-term',
-  });
-
-  const [transactionData, setTransactionData] = useState({
-    amount: '',
-    type: 'deposit' as 'deposit' | 'withdraw',
-  });
-
-  useEffect(() => {
-    fetchSavings();
-  }, []);
-
-  const fetchSavings = async () => {
-    try {
-      const response = await fetch('/api/savings');
-      const data = await response.json();
-      
-      if (data.savings) {
-        setSavings(data.savings);
-      }
-    } catch (error) {
-      console.error('Error fetching savings:', error);
-      setError('Không thể tải dữ liệu');
-    } finally {
-      setIsLoading(false);
+  const addGoal = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const targetAmount = form.targetAmount;
+    if (
+      !form.name.trim() ||
+      !Number.isFinite(targetAmount) ||
+      targetAmount <= 0 ||
+      !form.targetDate ||
+      form.targetDate < today()
+    ) {
+      notify('Vui lòng nhập tên mục tiêu, số tiền hợp lệ và ngày dự kiến.', { type: 'error' });
+      return;
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
 
     try {
-      const payload = {
-        ...formData,
-        targetAmount: parseFloat(formData.targetAmount.replace(/\./g, '')),
+      const goal: SavingsGoal = {
+        id: createId(),
+        name: form.name.trim(),
+        targetAmount,
+        currentAmount: 0,
+        targetDate: form.targetDate,
+        description: form.description.trim(),
       };
-
-      const response = await fetch('/api/savings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra');
-      }
-
-      setSuccess('Tạo mục tiêu tiết kiệm thành công!');
-      await fetchSavings();
-      resetForm();
-      setIsModalOpen(false);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
+      updateFinanceData((data) => ({ ...data, goals: [goal, ...data.goals] }));
+      setForm({ name: '', targetAmount: 0, targetDate: '', description: '' });
+      setIsGoalOpen(false);
+      notify('Đã tạo mục tiêu tiết kiệm.', { type: 'success' });
+    } catch (saveError) {
+      notify(saveError instanceof Error ? saveError.message : 'Không thể lưu mục tiêu.', { type: 'error' });
     }
   };
 
-  const handleTransaction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedSaving) return;
-
-    setError('');
-    setIsSubmitting(true);
+  const updateBalance = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedGoal) return;
+    const value = amount;
+    if (!Number.isFinite(value) || value <= 0) {
+      notify('Số tiền phải lớn hơn 0.', { type: 'error' });
+      return;
+    }
+    if (transactionType === 'withdraw' && value > selectedGoal.currentAmount) {
+      notify('Số dư mục tiêu không đủ để rút khoản tiền này.', { type: 'error' });
+      return;
+    }
 
     try {
-      const payload = {
-        amount: parseFloat(transactionData.amount.replace(/\./g, '')),
-        type: transactionData.type,
-      };
-
-      const response = await fetch(`/api/savings?id=${selectedSaving._id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra');
-      }
-
-      setSuccess(data.message);
-      await fetchSavings();
-      setIsTransactionModalOpen(false);
-      setTransactionData({ amount: '', type: 'deposit' });
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
+      updateFinanceData((data) => ({
+        ...data,
+        goals: data.goals.map((goal) =>
+          goal.id === selectedGoal.id
+            ? { ...goal, currentAmount: goal.currentAmount + (transactionType === 'deposit' ? value : -value) }
+            : goal
+        ),
+      }));
+      setSelectedGoal(null);
+      setAmount(0);
+      notify(
+        transactionType === 'deposit'
+          ? 'Đã ghi nhận khoản góp vào mục tiêu.'
+          : 'Đã cập nhật số dư sau khi rút tiền.',
+        { type: 'success' }
+      );
+    } catch (saveError) {
+      notify(saveError instanceof Error ? saveError.message : 'Không thể cập nhật mục tiêu.', { type: 'error' });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa mục tiêu này?')) return;
-
+  const deleteGoal = (goal: SavingsGoal) => {
     try {
-      const response = await fetch(`/api/savings?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Không thể xóa mục tiêu');
-      }
-
-      setSuccess('Xóa mục tiêu thành công!');
-      fetchSavings();
-    } catch (err: any) {
-      setError(err.message);
+      updateFinanceData((data) => ({ ...data, goals: data.goals.filter((item) => item.id !== goal.id) }));
+      notify(`Đã xóa mục tiêu ${goal.name}.`, { type: 'success' });
+    } catch (saveError) {
+      notify(saveError instanceof Error ? saveError.message : 'Không thể xóa mục tiêu.', { type: 'error' });
+    } finally {
+      setGoalToDelete(null);
     }
   };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      targetAmount: '',
-      targetDate: '',
-      description: '',
-      color: COLORS[0],
-      savingType: 'accumulative',
-    });
-  };
-
-  const formatCurrency = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (!digits) return '';
-    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  };
-
-  const getProgress = (saving: Saving) => {
-    return Math.min((saving.currentAmount / saving.targetAmount) * 100, 100);
-  };
-
-  const getDaysLeft = (targetDate: string) => {
-    return differenceInDays(new Date(targetDate), new Date());
-  };
-
-  if (isLoading) {
-    return <Loading fullScreen text="Đang tải mục tiêu tiết kiệm..." />;
-  }
 
   return (
-    <div className="space-y-6 relative">
-      {/* Animated gradient background blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-blob"></div>
-      <div className="absolute top-40 right-0 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-red-400/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+    <div>
+      <PageHeader
+        eyebrow="Dành dụm cho điều quan trọng"
+        title="Mục tiêu tiết kiệm"
+        description="Chia nhỏ mục tiêu thành từng bước, theo dõi số tiền đã góp và tiến độ mỗi ngày."
+        action={<button type="button" onClick={() => setIsGoalOpen(true)} className={`${primaryButtonClassName} w-full sm:w-auto`}><Plus size={17} /> Tạo mục tiêu</button>}
+      />
 
-      {/* Header with glassmorphism */}
-      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
-        <div className="relative p-8">
-          <div className="flex items-center justify-between">
+      <div className="mb-6 grid gap-4 sm:grid-cols-[1.4fr_1fr]">
+        <div className="rounded-2xl bg-amber-400 p-6 text-amber-950">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400/20 to-purple-400/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20">
-                  <PiggyBank className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-                </div>
-                Mục tiêu tiết kiệm
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
-                Quản lý và theo dõi các mục tiêu tài chính của bạn
-              </p>
+              <p className="text-sm font-medium text-amber-950/70">Tổng tiền đã dành dụm</p>
+              <p className="mt-2 break-words text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">{formatMoney(totalSaved)}</p>
+              <p className="mt-2 break-words text-sm text-amber-950/70 [overflow-wrap:anywhere]">Trên tổng mục tiêu {formatMoney(totalTarget)}</p>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
-            >
-              <Plus size={20} className="mr-2" />
-              Tạo mục tiêu mới
-            </Button>
+            <span className="rounded-2xl bg-white/40 p-3"><Coins size={23} /></span>
           </div>
-
-          {/* Summary Stats */}
-          {savings.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="relative backdrop-blur-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl p-4 border border-white/20">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng mục tiêu</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{savings.length}</p>
-              </div>
-              <div className="relative backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-2xl p-4 border border-white/20">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng đã tiết kiệm</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                  {savings.reduce((sum, s) => sum + s.currentAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
-                </p>
-              </div>
-              <div className="relative backdrop-blur-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl p-4 border border-white/20">
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Tổng mục tiêu</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  {savings.reduce((sum, s) => sum + s.targetAmount, 0).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}₫
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-amber-950/10">
+            <div className="h-full rounded-full bg-amber-950" style={{ width: `${overallProgress}%` }} />
+          </div>
+          <p className="mt-2 text-xs font-semibold">{overallProgress}% hoàn thành tổng mục tiêu</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <span className="inline-flex rounded-xl bg-emerald-50 p-2.5 text-emerald-700"><Target size={19} /></span>
+          <p className="mt-4 text-sm text-slate-500">Mục tiêu đang theo dõi</p>
+          <p className="mt-1 text-3xl font-semibold text-slate-950">{goals.length}</p>
+          <p className="mt-2 text-sm text-slate-500">Từng bước nhỏ cũng là tiến bộ.</p>
         </div>
       </div>
 
-      {/* Alerts */}
-      <div className="relative z-10">
-        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
-      </div>
-
-      {/* Savings Grid */}
-      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {savings.map((saving) => {
-          const progress = getProgress(saving);
-          const daysLeft = getDaysLeft(saving.targetDate);
-          const isOverdue = daysLeft < 0;
-          const isCompleted = progress >= 100;
-
-          return (
-            <div key={saving._id} className="group relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:scale-105 transition-all duration-300">
-              {/* Gradient Header */}
-              <div
-                className="h-32 relative rounded-t-3xl backdrop-blur-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${saving.color}dd, ${saving.color})`
-                }}
-              >
-                <div className="absolute inset-0 bg-white/10 dark:bg-black/10"></div>
-                
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDelete(saving._id)}
-                  className="absolute top-3 right-3 w-8 h-8 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
-                >
-                  <Trash2 size={16} className="text-white" />
-                </button>
-
-                {/* Icon and Name */}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl">
-                      <PiggyBank size={28} className="text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-xl text-white mb-1 truncate">
-                        {saving.name}
-                      </h3>
-                      {saving.description && (
-                        <p className="text-xs text-white/80 truncate">
-                          {saving.description}
-                        </p>
-                      )}
+      {goals.length ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {goals.map((goal) => {
+            const progress = goal.targetAmount > 0 ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0;
+            const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
+            return (
+              <article key={goal.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="rounded-xl bg-amber-50 p-3 text-amber-700"><Target size={20} /></span>
+                    <div className="min-w-0">
+                      <h2 className="break-words font-semibold text-slate-900">{goal.name}</h2>
+                      <p className="mt-1 break-words text-sm text-slate-500">{goal.description || 'Mục tiêu tiết kiệm của bạn'}</p>
                     </div>
                   </div>
+                  <button type="button" aria-label={`Xóa mục tiêu ${goal.name}`} onClick={() => setGoalToDelete(goal)} className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 size={16} /></button>
                 </div>
-
-                {/* Saving Type Badge */}
-                <div className="absolute top-3 left-3">
-                  {saving.savingType === 'long-term' ? (
-                    <div className="bg-purple-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                      🔒 Dài hạn
-                    </div>
-                  ) : (
-                    <div className="bg-blue-500/90 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                      💎 Tích lũy
-                    </div>
-                  )}
-                </div>
-
-                {/* Completion Badge */}
-                {isCompleted && (
-                  <div className="absolute top-12 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    <Target size={12} />
-                    Hoàn thành!
+                <div className="mt-6 flex flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="break-words text-xl font-semibold text-slate-950 [overflow-wrap:anywhere] sm:text-2xl">{formatMoney(goal.currentAmount)}</p>
+                    <p className="mt-1 text-xs text-slate-500">Mục tiêu {formatMoney(goal.targetAmount)}</p>
                   </div>
-                )}
+                  <span className="text-sm font-semibold text-emerald-700">{progress}%</span>
+                </div>
+                <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <span>Còn {formatMoney(remaining)}</span>
+                  <span className="inline-flex items-center gap-1"><CalendarDays size={13} /> {new Date(`${goal.targetDate}T12:00:00`).toLocaleDateString('vi-VN')}</span>
+                </div>
+                <div className="mt-5 flex gap-2">
+                  <button type="button" onClick={() => { setSelectedGoal(goal); setTransactionType('deposit'); setAmount(0); }} className="min-h-11 flex-1 rounded-xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">Góp thêm</button>
+                  <button type="button" disabled={goal.currentAmount <= 0} onClick={() => { setSelectedGoal(goal); setTransactionType('withdraw'); setAmount(0); }} className="min-h-11 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">Rút tiền</button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <EmptyState title="Chưa có mục tiêu tiết kiệm" description="Tạo mục tiêu đầu tiên và bắt đầu tích lũy cho những điều bạn mong muốn." />
+        </div>
+      )}
+
+      {(isGoalOpen || selectedGoal) && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4" onMouseDown={(event) => event.target === event.currentTarget && (setIsGoalOpen(false), setSelectedGoal(null))}>
+          <div role="dialog" aria-modal="true" aria-labelledby="saving-dialog-title" className="max-h-[calc(100dvh-0.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl sm:max-h-[90vh] sm:rounded-2xl sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="saving-dialog-title" className="text-xl font-semibold text-slate-950">
+                  {selectedGoal ? `${transactionType === 'deposit' ? 'Góp vào' : 'Rút khỏi'} ${selectedGoal.name}` : 'Tạo mục tiêu tiết kiệm'}
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">{selectedGoal ? 'Cập nhật số dư mục tiêu.' : 'Đặt tên, số tiền và thời hạn bạn mong muốn.'}</p>
               </div>
-
-              <div className="relative p-6">
-                {/* Progress Section */}
-                <div className="mb-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                      Tiến độ
-                    </span>
-                    <span className="text-2xl font-bold" style={{ color: saving.color }}>
-                      {progress.toFixed(0)}%
-                    </span>
-                  </div>
-                  <div className="relative w-full h-4 bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full overflow-hidden shadow-inner border border-white/10">
-                    <div
-                      className="absolute top-0 left-0 h-full transition-all duration-1000 ease-out rounded-full"
-                      style={{
-                        width: `${progress}%`,
-                        background: `linear-gradient(90deg, ${saving.color}dd, ${saving.color})`
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount Info Cards */}
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      💰 Hiện tại
-                    </span>
-                    <span className="font-bold text-green-600 dark:text-green-400">
-                      {saving.currentAmount.toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      🎯 Mục tiêu
-                    </span>
-                    <span className="font-bold text-blue-600 dark:text-blue-400">
-                      {saving.targetAmount.toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-100 dark:border-orange-800">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      📊 Còn thiếu
-                    </span>
-                    <span className="font-bold text-orange-600 dark:text-orange-400">
-                      {Math.max(0, saving.targetAmount - saving.currentAmount).toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
-                </div>
-
-                {/* Date Badge */}
-                <div className={`flex items-center justify-center gap-2 p-3 rounded-xl mb-4 ${
-                  isOverdue 
-                    ? 'bg-gradient-to-r from-red-100 to-pink-100 dark:from-red-900/30 dark:to-pink-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
-                    : isCompleted
-                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
-                    : 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                }`}>
-                  <Calendar size={18} />
-                  <span className="text-sm font-bold">
-                    {isOverdue ? '⚠️ Quá hạn' : isCompleted ? '✅ Đã hoàn thành' : `⏰ Còn ${daysLeft} ngày`}
-                  </span>
-                  <span className="text-xs opacity-70">
-                    • {format(new Date(saving.targetDate), 'dd/MM/yyyy')}
-                  </span>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedSaving(saving);
-                      setTransactionData({ amount: '', type: 'deposit' });
-                      setIsTransactionModalOpen(true);
-                    }}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
-                    disabled={saving.savingType === 'long-term' && saving.hasDeposited}
-                    title={saving.savingType === 'long-term' && saving.hasDeposited ? 'Tiết kiệm dài hạn chỉ được nạp 1 lần' : ''}
-                  >
-                    <TrendingUp size={18} className="mr-1" />
-                    {saving.savingType === 'long-term' && saving.hasDeposited ? 'Đã nạp' : 'Nạp tiền'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedSaving(saving);
-                      setTransactionData({ amount: '', type: 'withdraw' });
-                      setIsTransactionModalOpen(true);
-                    }}
-                    className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed"
-                    disabled={
-                      saving.currentAmount === 0 || 
-                      (saving.savingType === 'long-term' && getDaysLeft(saving.targetDate) > 0)
-                    }
-                    title={
-                      saving.currentAmount === 0 
-                        ? 'Không có tiền để rút' 
-                        : saving.savingType === 'long-term' && getDaysLeft(saving.targetDate) > 0
-                        ? 'Tiết kiệm dài hạn chỉ được rút khi đến hạn'
-                        : ''
-                    }
-                  >
-                    <TrendingDown size={18} className="mr-1" />
-                    Rút tiền
-                  </Button>
-                </div>
-              </div>
+              <button type="button" aria-label="Đóng" onClick={() => { setIsGoalOpen(false); setSelectedGoal(null); }} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X size={19} /></button>
             </div>
-          );
-        })}
 
-        {savings.length === 0 && (
-          <div className="col-span-full relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-blue-500/5 to-purple-500/5"></div>
-            <div className="relative text-center py-20">
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-                <PiggyBank size={48} className="text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Chưa có mục tiêu tiết kiệm
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Tạo mục tiêu đầu tiên để bắt đầu hành trình tiết kiệm!
-              </p>
-              <Button
-                variant="primary"
-                onClick={() => setIsModalOpen(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-bold shadow-xl"
-              >
-                <Plus size={20} className="mr-2" />
-                Tạo mục tiêu ngay
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Create Saving Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Tạo mục tiêu tiết kiệm mới"
-        size="md"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Tên mục tiêu
-            </label>
-            <Input
-              placeholder="Ví dụ: Mua xe, Du lịch Nhật..."
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Loại tiết kiệm
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, savingType: 'accumulative' })}
-                className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
-                  formData.savingType === 'accumulative'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                }`}
-              >
-                <div className="text-3xl mb-2">💎</div>
-                <div className="font-bold text-gray-900 dark:text-gray-100 mb-1">Tích lũy</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  Có thể nạp và rút nhiều lần
+            {selectedGoal ? (
+              <form onSubmit={updateBalance} noValidate className="mt-5 space-y-4">
+                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                  Số tiền
+                  <MoneyInput required value={amount} onChange={setAmount} placeholder="Ví dụ: 500.000" />
+                </label>
+                <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+                  <button type="button" onClick={() => setSelectedGoal(null)} className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+                  <button type="submit" className={`${primaryButtonClassName} w-full sm:w-auto`}>{transactionType === 'deposit' ? 'Ghi nhận góp tiền' : 'Xác nhận rút'}</button>
                 </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, savingType: 'long-term' })}
-                className={`p-4 rounded-2xl border-2 transition-all duration-200 ${
-                  formData.savingType === 'long-term'
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                }`}
-              >
-                <div className="text-3xl mb-2">🔒</div>
-                <div className="font-bold text-gray-900 dark:text-gray-100 mb-1">Dài hạn</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  Nạp 1 lần, rút khi đến hạn
+              </form>
+            ) : (
+              <form onSubmit={addGoal} noValidate className="mt-5 space-y-4">
+                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                  Tên mục tiêu
+                  <input required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className={inputClassName} placeholder="Ví dụ: Quỹ dự phòng" />
+                </label>
+                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                  Số tiền mong muốn
+                  <MoneyInput required value={form.targetAmount} onChange={(targetAmount) => setForm({ ...form, targetAmount })} placeholder="Ví dụ: 30.000.000" />
+                </label>
+                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                  Ngày dự kiến hoàn thành
+                  <input required min={today()} type="date" value={form.targetDate} onChange={(event) => setForm({ ...form, targetDate: event.target.value })} className={inputClassName} />
+                </label>
+                <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                  Ghi chú (không bắt buộc)
+                  <input value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className={inputClassName} placeholder="Điều gì khiến mục tiêu này quan trọng?" />
+                </label>
+                <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+                  <button type="button" onClick={() => setIsGoalOpen(false)} className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+                  <button type="submit" className={`${primaryButtonClassName} w-full sm:w-auto`}>Tạo mục tiêu</button>
                 </div>
-              </button>
-            </div>
+              </form>
+            )}
           </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Số tiền mục tiêu (VNĐ)
-            </label>
-            <Input
-              placeholder="0"
-              value={formData.targetAmount}
-              onChange={(e) => setFormData({ ...formData, targetAmount: formatCurrency(e.target.value) })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Ngày đến mục tiêu
-            </label>
-            <Input
-              type="date"
-              value={formData.targetDate}
-              onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Mô tả (tùy chọn)
-            </label>
-            <Input
-              placeholder="Ghi chú về mục tiêu..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Màu sắc
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color })}
-                  className={`w-10 h-10 rounded-lg transition-transform ${
-                    formData.color === color ? 'scale-110 ring-2 ring-offset-2 ring-gray-400' : ''
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <ModalFooter>
-            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Hủy
-            </Button>
-            <Button type="submit" variant="primary" isLoading={isSubmitting}>
-              Tạo mục tiêu
-            </Button>
-          </ModalFooter>
-        </form>
-      </Modal>
-
-      {/* Transaction Modal */}
-      <Modal
-        isOpen={isTransactionModalOpen}
-        onClose={() => setIsTransactionModalOpen(false)}
-        title={transactionData.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
-        size="sm"
-      >
-        <form onSubmit={handleTransaction} className="space-y-4">
-          <div className="bg-gray-50 dark:bg-[#2a2a2a] p-4 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              Mục tiêu
-            </p>
-            <p className="font-bold text-gray-900 dark:text-gray-100">
-              {selectedSaving?.name}
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              {selectedSaving?.savingType === 'long-term' ? (
-                <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-semibold px-2 py-1 rounded-full">
-                  🔒 Dài hạn
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold px-2 py-1 rounded-full">
-                  💎 Tích lũy
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Số dư hiện tại: {selectedSaving?.currentAmount.toLocaleString('vi-VN')} ₫
-            </p>
-          </div>
-
-          {/* Show warning for long-term savings */}
-          {selectedSaving?.savingType === 'long-term' && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
-                ⚠️ {transactionData.type === 'deposit' 
-                  ? 'Lưu ý: Tiết kiệm dài hạn chỉ được nạp 1 lần duy nhất' 
-                  : `Lưu ý: Chỉ được rút khi đến hạn (${selectedSaving?.targetDate ? new Date(selectedSaving.targetDate).toLocaleDateString('vi-VN') : ''})`
-                }
-              </p>
-            </div>
-          )}
-
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-              Số tiền (VNĐ)
-            </label>
-            <Input
-              placeholder="0"
-              value={transactionData.amount}
-              onChange={(e) => setTransactionData({ ...transactionData, amount: formatCurrency(e.target.value) })}
-              required
-            />
-          </div>
-
-          <ModalFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsTransactionModalOpen(false)}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              variant={transactionData.type === 'deposit' ? 'primary' : 'danger'}
-              isLoading={isSubmitting}
-            >
-              {transactionData.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền'}
-            </Button>
-          </ModalFooter>
-        </form>
-      </Modal>
+        </div>
+      )}
+      <ConfirmDialog
+        isOpen={goalToDelete !== null}
+        title="Xóa mục tiêu?"
+        description={`Mục tiêu ${goalToDelete?.name ?? ''} và số tiền đã dành cho mục tiêu này sẽ bị xóa.`}
+        onCancel={() => setGoalToDelete(null)}
+        onConfirm={() => {
+          if (goalToDelete) deleteGoal(goalToDelete);
+        }}
+      />
     </div>
   );
 }

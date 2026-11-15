@@ -1,365 +1,187 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Modal, ModalFooter } from '@/components/ui/Modal';
-import { Alert } from '@/components/ui/Alert';
-import { Loading } from '@/components/ui/Loading';
-import { Plus, Trash2, AlertTriangle, TrendingUp } from 'lucide-react';
-import { clsx } from 'clsx';
+import { useMemo, useState, type FormEvent } from 'react';
+import { AlertTriangle, Plus, Trash2, WalletCards } from 'lucide-react';
+import { createId, type Budget, useFinanceData } from '@/lib/finance-store';
+import {
+  EmptyState,
+  formatMoney,
+  inputClassName,
+  PageHeader,
+  Panel,
+  primaryButtonClassName,
+} from '@/components/dashboard/FinanceUI';
+import { MoneyInput } from '@/components/dashboard/MoneyInput';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useToast } from '@/components/ui/ToastProvider';
 
-interface Budget {
-  _id: string;
-  category: string;
-  limit: number;
-  spent: number;
-  percentage: number;
-  month: number;
-  year: number;
-}
-
-const EXPENSE_CATEGORIES = [
-  { value: 'Ăn uống', label: 'Ăn uống' },
-  { value: 'Di chuyển', label: 'Di chuyển' },
-  { value: 'Mua sắm', label: 'Mua sắm' },
-  { value: 'Giải trí', label: 'Giải trí' },
-  { value: 'Học tập', label: 'Học tập' },
-  { value: 'Y tế', label: 'Y tế' },
-  { value: 'Nhà cửa', label: 'Nhà cửa' },
-  { value: 'Khác', label: 'Khác' },
-];
+const categories = ['Ăn uống', 'Di chuyển', 'Nhà cửa', 'Mua sắm', 'Y tế', 'Học tập', 'Giải trí', 'Hóa đơn', 'Khác'];
 
 export function BudgetManager() {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const { budgets, transactions, updateFinanceData } = useFinanceData();
+  const notify = useToast();
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  const [category, setCategory] = useState(categories[0]);
+  const [limit, setLimit] = useState(0);
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [year, month] = selectedMonth.split('-').map(Number);
 
-  const [formData, setFormData] = useState({
-    category: '',
-    limit: '',
-  });
+  const monthBudgets = useMemo(
+    () => budgets.filter((budget) => budget.year === year && budget.month === month),
+    [budgets, year, month]
+  );
+  const spentByCategory = useMemo(() => {
+    return transactions
+      .filter((transaction) => {
+        const date = new Date(`${transaction.date}T12:00:00`);
+        return transaction.type === 'expense' && date.getFullYear() === year && date.getMonth() + 1 === month;
+      })
+      .reduce<Record<string, number>>((totals, transaction) => {
+        totals[transaction.category] = (totals[transaction.category] || 0) + transaction.amount;
+        return totals;
+      }, {});
+  }, [transactions, year, month]);
+  const totalLimit = monthBudgets.reduce((sum, budget) => sum + budget.limit, 0);
+  const totalSpent = monthBudgets.reduce((sum, budget) => sum + (spentByCategory[budget.category] || 0), 0);
+  const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
 
-  useEffect(() => {
-    fetchBudgets();
-  }, [selectedMonth, selectedYear]);
-
-  const fetchBudgets = async () => {
-    try {
-      const response = await fetch(
-        `/api/budget?month=${selectedMonth}&year=${selectedYear}`
-      );
-      const data = await response.json();
-      
-      if (data.budgets) {
-        setBudgets(data.budgets);
-      }
-    } catch (error) {
-      console.error('Error fetching budgets:', error);
-      setError('Không thể tải dữ liệu');
-    } finally {
-      setIsLoading(false);
+  const saveBudget = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!Number.isFinite(limit) || limit <= 0) {
+      notify('Hạn mức phải lớn hơn 0.', { type: 'error' });
+      return;
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/budget', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          month: selectedMonth,
-          year: selectedYear,
-        }),
+      updateFinanceData((data) => {
+        const existing = data.budgets.find((budget) => budget.category === category && budget.month === month && budget.year === year);
+        const budget = { id: existing?.id || createId(), category, limit, month, year };
+        return {
+          ...data,
+          budgets: existing
+            ? data.budgets.map((item) => item.id === existing.id ? budget : item)
+            : [budget, ...data.budgets],
+        };
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Có lỗi xảy ra');
-      }
-
-      setSuccess('Thiết lập ngân sách thành công!');
-      setIsModalOpen(false);
-      fetchBudgets();
-      resetForm();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
+      setLimit(0);
+      setIsOpen(false);
+      notify('Đã lưu ngân sách.', { type: 'success' });
+    } catch (saveError) {
+      notify(saveError instanceof Error ? saveError.message : 'Không thể lưu ngân sách.', { type: 'error' });
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa ngân sách này?')) return;
-
+  const removeBudget = (budget: Budget) => {
     try {
-      const response = await fetch(`/api/budget?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Không thể xóa ngân sách');
-      }
-
-      setSuccess('Xóa ngân sách thành công!');
-      fetchBudgets();
-    } catch (err: any) {
-      setError(err.message);
+      updateFinanceData((data) => ({ ...data, budgets: data.budgets.filter((item) => item.id !== budget.id) }));
+      notify(`Đã xóa ngân sách ${budget.category}.`, { type: 'success' });
+    } catch (saveError) {
+      notify(saveError instanceof Error ? saveError.message : 'Không thể xóa ngân sách.', { type: 'error' });
+    } finally {
+      setBudgetToDelete(null);
     }
   };
-
-  const resetForm = () => {
-    setFormData({
-      category: '',
-      limit: '',
-    });
-  };
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return 'bg-red-600';
-    if (percentage >= 80) return 'bg-yellow-600';
-    return 'bg-green-600';
-  };
-
-  const getStatusIcon = (percentage: number) => {
-    if (percentage >= 100) {
-      return <AlertTriangle className="w-5 h-5 text-red-600" />;
-    }
-    if (percentage >= 80) {
-      return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
-    }
-    return <TrendingUp className="w-5 h-5 text-green-600" />;
-  };
-
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: (i + 1).toString(),
-    label: `Tháng ${i + 1}`,
-  }));
-
-  const years = Array.from({ length: 5 }, (_, i) => ({
-    value: (currentDate.getFullYear() - 2 + i).toString(),
-    label: (currentDate.getFullYear() - 2 + i).toString(),
-  }));
-
-  if (isLoading) {
-    return <Loading fullScreen text="Đang tải ngân sách..." />;
-  }
 
   return (
-    <div className="space-y-6 relative">
-      {/* Animated gradient background blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl animate-blob"></div>
-      <div className="absolute top-40 right-0 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+    <div>
+      <PageHeader
+        eyebrow="Chủ động chi tiêu"
+        title="Ngân sách"
+        description="Đặt giới hạn cho từng danh mục và theo dõi số tiền đã dùng trong tháng."
+        action={<button type="button" onClick={() => setIsOpen(true)} className={`${primaryButtonClassName} w-full sm:w-auto`}><Plus size={17} /> Đặt ngân sách</button>}
+      />
 
-      {/* Header */}
-      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl p-6">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-3xl"></div>
-        <div className="relative flex items-center justify-between">
+      <div className="mb-6 grid gap-4 sm:grid-cols-[1fr_2fr]">
+        <label className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Chọn tháng</span>
+          <input type="month" value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)} className={inputClassName} />
+        </label>
+        <div className="grid grid-cols-1 gap-4 rounded-2xl bg-emerald-900 p-5 text-white min-[420px]:grid-cols-2">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              💰 Quản lý ngân sách
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Thiết lập và theo dõi ngân sách chi tiêu
-            </p>
+            <p className="text-sm text-emerald-100">Đã chi trong ngân sách</p>
+            <p className="mt-2 break-words text-lg font-semibold [overflow-wrap:anywhere] sm:text-xl">{formatMoney(totalSpent)}</p>
           </div>
-          <Button onClick={() => setIsModalOpen(true)} variant="success">
-            <Plus size={20} className="mr-2" />
-            Thêm ngân sách
-          </Button>
-        </div>
-      </div>
-
-      {/* Alerts */}
-      <div className="relative z-10">
-        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
-      </div>
-
-      {/* Month/Year Selector */}
-      <div className="relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-blue-500/5 to-cyan-500/5"></div>
-        <div className="relative p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Tháng"
-              value={selectedMonth.toString()}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              options={months}
-            />
-            <Select
-              label="Năm"
-              value={selectedYear.toString()}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              options={years}
-            />
+          <div>
+            <p className="text-sm text-emerald-100">Tổng hạn mức</p>
+            <p className="mt-2 break-words text-lg font-semibold [overflow-wrap:anywhere] sm:text-xl">{formatMoney(totalLimit)}</p>
           </div>
         </div>
       </div>
 
-      {/* Budget Overview */}
-      <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {budgets.map((budget) => (
-          <div key={budget._id} className="group relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden hover:shadow-blue-500/20 hover:scale-105 transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400/20 to-purple-400/20 backdrop-blur-xl rounded-full flex items-center justify-center border border-white/20">
-                    {getStatusIcon(budget.percentage)}
+      <Panel title={`Hạn mức ${monthLabel}`} description="Chi tiêu được tính tự động từ các giao dịch đã ghi.">
+        {monthBudgets.length ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {monthBudgets.map((budget) => {
+              const spent = spentByCategory[budget.category] || 0;
+              const percent = budget.limit > 0 ? Math.round((spent / budget.limit) * 100) : 0;
+              const exceeded = spent > budget.limit;
+
+              return (
+                <article key={budget.id} className="rounded-2xl border border-slate-200 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-xl p-2.5 ${exceeded ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                        {exceeded ? <AlertTriangle size={18} /> : <WalletCards size={18} />}
+                      </span>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">{budget.category}</h3>
+                        <p className="mt-1 text-xs text-slate-500">{exceeded ? 'Đã vượt hạn mức' : `Còn ${formatMoney(Math.max(0, budget.limit - spent))}`}</p>
+                      </div>
+                    </div>
+                    <button type="button" aria-label={`Xóa ngân sách ${budget.category}`} onClick={() => setBudgetToDelete(budget)} className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"><Trash2 size={16} /></button>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                      {budget.category}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {budget.percentage.toFixed(0)}% đã sử dụng
-                    </p>
+                  <div className="mt-6 flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
+                    <p className="break-words text-lg font-semibold text-slate-900 [overflow-wrap:anywhere]">{formatMoney(spent)}</p>
+                    <p className="text-sm text-slate-500">/ {formatMoney(budget.limit)}</p>
                   </div>
-                </div>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleDelete(budget._id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <div className="w-full bg-gray-200/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full h-3 border border-white/10">
-                  <div
-                    className={clsx(
-                      'h-full rounded-full transition-all duration-300 shadow-lg',
-                      getProgressColor(budget.percentage)
-                    )}
-                    style={{ width: `${Math.min(budget.percentage, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Amount Info */}
-              <div className="flex items-center justify-between text-sm">
-                <div>
-                  <p className="text-gray-500 dark:text-gray-400">Đã chi</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">
-                    {budget.spent.toLocaleString('vi-VN')} ₫
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-gray-500 dark:text-gray-400">Hạn mức</p>
-                  <p className="font-semibold text-gray-900 dark:text-gray-100">
-                    {budget.limit.toLocaleString('vi-VN')} ₫
-                  </p>
-                </div>
-              </div>
-
-              {/* Warning */}
-              {budget.percentage >= 80 && (
-                <Alert
-                  type={budget.percentage >= 100 ? 'error' : 'warning'}
-                  message={
-                    budget.percentage >= 100
-                      ? 'Đã vượt ngân sách!'
-                      : 'Sắp hết ngân sách!'
-                  }
-                  className="mt-4"
-                />
-              )}
-            </div>
+                  <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className={`h-full rounded-full transition-all ${exceeded ? 'bg-rose-500' : percent >= 80 ? 'bg-amber-400' : 'bg-emerald-600'}`} style={{ width: `${Math.min(100, percent)}%` }} />
+                  </div>
+                  <p className={`mt-2 text-xs font-medium ${exceeded ? 'text-rose-600' : 'text-slate-500'}`}>{percent}% hạn mức</p>
+                </article>
+              );
+            })}
           </div>
-        ))}
-
-        {budgets.length === 0 && (
-          <div className="col-span-full relative backdrop-blur-xl bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-700/30 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-blue-500/5 to-purple-500/5"></div>
-            <div className="relative p-12">
-              <div className="text-center">
-                <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
-                  Chưa có ngân sách nào được thiết lập
-                </p>
-                <Button onClick={() => setIsModalOpen(true)}>
-                  <Plus size={20} className="mr-2" />
-                  Thêm ngân sách đầu tiên
-                </Button>
-              </div>
-            </div>
-          </div>
+        ) : (
+          <EmptyState title="Chưa có hạn mức cho tháng này" description="Tạo ngân sách theo danh mục để kiểm soát chi tiêu dễ dàng hơn." />
         )}
-      </div>
+      </Panel>
 
-      {/* Add Budget Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Thiết lập ngân sách"
-        size="md"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Select
-            label="Danh mục"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            options={[
-              { value: '', label: 'Chọn danh mục' },
-              ...EXPENSE_CATEGORIES,
-            ]}
-            required
-          />
-
-          <Input
-            type="number"
-            label="Hạn mức (VNĐ)"
-            placeholder="0"
-            value={formData.limit}
-            onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
-            required
-            min="0"
-            step="10000"
-          />
-
-          <Alert
-            type="info"
-            message={`Ngân sách sẽ được áp dụng cho tháng ${selectedMonth}/${selectedYear}`}
-          />
-
-          <ModalFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setIsModalOpen(false)}
-              disabled={isSubmitting}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              variant="success"
-              isLoading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              Thiết lập
-            </Button>
-          </ModalFooter>
-        </form>
-      </Modal>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 sm:items-center sm:p-4" onMouseDown={(event) => event.target === event.currentTarget && setIsOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="budget-dialog-title" className="max-h-[calc(100dvh-0.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl sm:max-h-[90vh] sm:rounded-2xl sm:p-6">
+            <h2 id="budget-dialog-title" className="text-xl font-semibold text-slate-950">Đặt ngân sách</h2>
+            <p className="mt-1 text-sm text-slate-500">{monthLabel}</p>
+            <form onSubmit={saveBudget} noValidate className="mt-5 space-y-4">
+              <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                Danh mục
+                <select value={category} onChange={(event) => setCategory(event.target.value)} className={inputClassName}>
+                  {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+              <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+                Hạn mức
+                <MoneyInput required value={limit} onChange={setLimit} placeholder="Ví dụ: 3.000.000" />
+              </label>
+              <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+                <button type="button" onClick={() => setIsOpen(false)} className="min-h-11 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Hủy</button>
+                <button type="submit" className={`${primaryButtonClassName} w-full sm:w-auto`}>Lưu ngân sách</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      <ConfirmDialog
+        isOpen={budgetToDelete !== null}
+        title="Xóa ngân sách?"
+        description={`Ngân sách cho danh mục ${budgetToDelete?.category ?? ''} sẽ bị xóa.`}
+        onCancel={() => setBudgetToDelete(null)}
+        onConfirm={() => {
+          if (budgetToDelete) removeBudget(budgetToDelete);
+        }}
+      />
     </div>
   );
 }

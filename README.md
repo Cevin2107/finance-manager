@@ -1,96 +1,43 @@
-# 💰 FinanceApp - Ứng dụng Quản lý Tài chính Cá nhân
+# Sổ Thu Chi
 
-Ứng dụng quản lý tài chính hiện đại, thông minh và dễ sử dụng, được xây dựng với Next.js 15, TypeScript, MongoDB và NextAuth.
+Ứng dụng quản lý tài chính cá nhân để ghi lại dòng tiền vào/ra, phân loại mục đích chi tiêu, đặt ngân sách và theo dõi mục tiêu tiết kiệm.
 
-## ✨ Tính năng chính
+## Tính năng
 
-### 🔐 Bảo mật & Xác thực
-- ✅ Đăng ký/Đăng nhập với email & password
-- ✅ Mã hóa mật khẩu với bcrypt
-- ✅ Session management với JWT
-- ✅ Protected routes với middleware
-- ✅ Bảo mật API endpoints
+- Dashboard tổng hợp thu nhập, chi tiêu, số dư và tỷ lệ tiết kiệm.
+- Ghi, sửa, xóa, tìm kiếm và lọc giao dịch thu/chi theo danh mục.
+- Đặt ngân sách theo danh mục và theo dõi mức sử dụng từng tháng.
+- Tạo mục tiêu tiết kiệm, ghi nhận góp thêm hoặc rút tiền.
+- Báo cáo dòng tiền và phân bổ chi tiêu theo danh mục trong 3, 6 hoặc 12 tháng.
+- Chia sẻ snapshot thu chi tháng hiện tại bằng liên kết có hạn dùng và mã truy cập 6 chữ số.
+- Giao diện tương thích với điện thoại và có thể cài đặt như PWA.
 
-### 📊 Dashboard & Tổng quan
-- ✅ Thống kê tổng thu nhập, chi tiêu, số dư
-- ✅ Biểu đồ phân tích trực quan (Line, Bar, Pie charts)
-- ✅ Giao dịch gần đây
-- ✅ Responsive trên mọi thiết bị
+## Cấu hình Supabase
 
-### 💸 Quản lý Giao dịch
-- ✅ Thêm/Xóa giao dịch (Thu nhập & Chi tiêu)
-- ✅ Phân loại theo danh mục
-- ✅ Tìm kiếm và lọc nâng cao
-- ✅ Ghi chú mô tả chi tiết
+1. Tạo `.env.local` từ `.env.example`, sau đó điền Project URL và Publishable key trong Supabase.
+2. Trong Supabase Dashboard, bật **Allow new users to sign up** và **Anonymous Sign-Ins** tại Authentication → Sign In / Providers.
+3. Chạy lần lượt các migration trong `supabase/migrations` trong Supabase SQL Editor để tạo bảng, bật Row Level Security và cấu hình chia sẻ tháng.
 
-### 🎯 Quản lý Ngân sách
-- ✅ Thiết lập hạn mức chi tiêu theo danh mục
-- ✅ Theo dõi % sử dụng ngân sách
-- ✅ Cảnh báo khi sắp vượt/vượt ngân sách
-- ✅ Tự động tính toán chi tiêu thực tế
+Ứng dụng tự tạo danh tính lưu trữ ẩn danh, không có màn hình đăng nhập. Chính sách RLS giới hạn mỗi danh tính chỉ đọc và sửa dữ liệu của mình.
 
-### 📈 Báo cáo & Phân tích
-- ✅ Biểu đồ xu hướng theo tháng
-- ✅ Phân tích chi tiêu theo danh mục
-- ✅ So sánh thu nhập vs chi tiêu
-- ✅ Tỷ lệ tiết kiệm
+## Bắt đầu
 
-## 🚀 Công nghệ sử dụng
-
-- **Framework**: Next.js 15 (App Router)
-- **Language**: TypeScript
-- **Database**: MongoDB với Mongoose
-- **Authentication**: NextAuth v4
-- **UI**: TailwindCSS v4
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Date**: date-fns
-
-## 📦 Cài đặt
-
-### 1. Cài đặt dependencies
+Yêu cầu Node.js 20 trở lên.
 
 ```bash
 npm install
-```
-
-### 2. Cấu hình môi trường
-
-Tạo file `.env.local`:
-
-```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/finance-app
-AUTH_SECRET=your-secret-key-here
-NEXTAUTH_URL=http://localhost:3000
-```
-
-### 3. Chạy development server
-
-```bash
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000) để xem ứng dụng.
+Mở [http://localhost:3000](http://localhost:3000).
 
-## 🎯 Hướng dẫn sử dụng
+## Lưu trữ dữ liệu
 
-1. **Đăng ký/Đăng nhập** - Tạo tài khoản hoặc đăng nhập
-2. **Dashboard** - Xem tổng quan tài chính
-3. **Giao dịch** - Quản lý thu chi hàng ngày
-4. **Ngân sách** - Thiết lập và theo dõi ngân sách
-5. **Báo cáo** - Phân tích chi tiết tài chính
+Dữ liệu được lưu trong Supabase và giữ bản sao cục bộ trên trình duyệt. Liên kết chia sẻ chỉ chứa snapshot các giao dịch tháng tại thời điểm tạo, cần mã 6 chữ số riêng và tự hết hạn theo thời gian đã chọn. Không có đồng bộ liên thiết bị hoặc cách khôi phục danh tính ẩn danh sau khi xóa dữ liệu trình duyệt.
 
-## 🔒 Bảo mật
+## Kiểm tra và build
 
-- ✅ Mật khẩu được hash với bcrypt
-- ✅ JWT tokens với expiry time
-- ✅ Protected API routes
-- ✅ Server-side validation
-
-## 📝 License
-
-MIT License
-
----
-
-**Happy Coding! 🚀**
+```bash
+npm run lint
+npm run build
+```

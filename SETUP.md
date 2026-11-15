@@ -1,179 +1,43 @@
-# 🚀 HƯỚNG DẪN CHẠY DỰ ÁN
+# Hướng dẫn chạy Sổ Thu Chi
 
-## Bước 1: Chuẩn bị MongoDB
+## Yêu cầu
 
-### Option 1: MongoDB Atlas (Cloud - Khuyên dùng)
-1. Truy cập [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Đăng ký/Đăng nhập tài khoản
-3. Tạo cluster mới (Free tier)
-4. Tạo Database User (username + password)
-5. Whitelist IP: 0.0.0.0/0 (cho phép mọi IP)
-6. Get Connection String:
-   - Click "Connect" > "Connect your application"
-   - Copy connection string
-   - Format: `mongodb+srv://<username>:<password>@cluster.mongodb.net/finance-app`
+- Node.js 20 trở lên
+- Project Supabase
 
-### Option 2: MongoDB Local
-1. Tải MongoDB Community Server
-2. Cài đặt và chạy
-3. Connection string: `mongodb://localhost:27017/finance-app`
+## Kết nối Supabase
 
-## Bước 2: Setup Environment Variables
+1. Tạo `.env.local` từ `.env.example` rồi điền Project URL và Publishable key.
+2. Trong Supabase Dashboard, bật **Allow new users to sign up** và **Anonymous Sign-Ins** tại Authentication → Sign In / Providers.
+3. Mở SQL Editor và chạy lần lượt các migration trong `supabase/migrations`.
 
-1. Copy file `.env.example` thành `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
+Các migration tạo bảng lưu dữ liệu, bật Row Level Security và chỉ cho phép danh tính hiện tại truy cập dòng dữ liệu của mình. Migration chia sẻ tạo các hàm RPC để lưu snapshot tháng, băm mã 6 chữ số và chỉ trả snapshot khi mã đúng, liên kết còn hạn. Không cần thêm service-role key vào ứng dụng.
 
-2. Mở `.env.local` và cập nhật:
-   ```env
-   MONGODB_URI=mongodb+srv://your-username:your-password@cluster.mongodb.net/finance-app
-   AUTH_SECRET=run-this-command-openssl-rand-base64-32
-   NEXTAUTH_URL=http://localhost:3000
-   ```
-
-3. Tạo AUTH_SECRET (Windows PowerShell):
-   ```powershell
-   # Option 1: Node.js
-   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-   
-   # Option 2: Online
-   # Truy cập: https://generate-secret.vercel.app/32
-   ```
-
-## Bước 3: Cài đặt Dependencies
+## Chạy ứng dụng
 
 ```bash
 npm install
-```
-
-## Bước 4: Chạy Development Server
-
-```bash
 npm run dev
 ```
 
-Ứng dụng sẽ chạy tại: http://localhost:3000
+Mở `http://localhost:3000`. Ứng dụng tự tạo danh tính lưu trữ ẩn danh; không cần đăng nhập thủ công.
 
-## Bước 5: Test Application
+## Các màn hình
 
-1. Mở trình duyệt: http://localhost:3000
-2. Click "Đăng ký" để tạo tài khoản mới
-3. Đăng nhập với tài khoản vừa tạo
-4. Bắt đầu sử dụng!
+- **Tổng quan** (`/dashboard`): dòng tiền tháng này, danh mục chi tiêu, ngân sách và mục tiêu.
+- **Giao dịch** (`/dashboard/transactions`): ghi khoản thu/chi, phân loại, tìm kiếm, sửa và xóa.
+- **Ngân sách** (`/dashboard/budget`): đặt hạn mức chi tiêu theo danh mục và tháng.
+- **Mục tiêu tiết kiệm** (`/dashboard/savings`): tạo mục tiêu, ghi nhận góp thêm hoặc rút tiền.
+- **Báo cáo** (`/dashboard/reports`): xem dòng tiền và chi tiêu theo danh mục trong 3, 6 hoặc 12 tháng.
 
-## 📋 Các Tính Năng Cần Test
+## Lưu ý về dữ liệu
 
-### ✅ Authentication
-- [ ] Đăng ký tài khoản mới
-- [ ] Đăng nhập
-- [ ] Đăng xuất
-- [ ] Protected routes (thử truy cập /dashboard khi chưa đăng nhập)
+Dữ liệu chính được lưu trên Supabase, đồng thời có bản sao cục bộ trên thiết bị hiện tại. Link chia sẻ mặc định hết hạn sau 1 ngày; có thể chọn 3, 7 hoặc 30 ngày. Link chia sẻ là snapshot, không cập nhật theo giao dịch phát sinh sau khi tạo; sau 10 lần nhập sai mã, link tạm khóa trong 15 phút. Không có đăng nhập tài khoản để mang danh tính ẩn danh sang thiết bị khác; xóa dữ liệu trình duyệt có thể làm mất cách truy cập dữ liệu trên Supabase.
 
-### ✅ Transactions
-- [ ] Thêm giao dịch thu nhập
-- [ ] Thêm giao dịch chi tiêu
-- [ ] Xem danh sách giao dịch
-- [ ] Lọc giao dịch (theo loại)
-- [ ] Tìm kiếm giao dịch
-- [ ] Xóa giao dịch
-
-### ✅ Budget
-- [ ] Tạo ngân sách mới
-- [ ] Xem progress bar ngân sách
-- [ ] Nhận cảnh báo khi vượt 80%
-- [ ] Nhận cảnh báo khi vượt 100%
-- [ ] Xóa ngân sách
-
-### ✅ Reports
-- [ ] Xem biểu đồ thu nhập vs chi tiêu
-- [ ] Xem biểu đồ phân bổ chi tiêu
-- [ ] Xem xu hướng số dư
-- [ ] Thay đổi khoảng thời gian (3/6/12 tháng)
-
-### ✅ Dashboard
-- [ ] Xem thống kê tổng quan
-- [ ] Xem 5 giao dịch gần nhất
-- [ ] Kiểm tra số liệu real-time
-
-### ✅ UI/UX
-- [ ] Dark mode (nếu hệ thống hỗ trợ)
-- [ ] Responsive mobile
-- [ ] Responsive tablet
-- [ ] Animations mượt mà
-
-## 🐛 Troubleshooting
-
-### Lỗi kết nối MongoDB
-```
-Error: Could not connect to MongoDB
-```
-**Giải pháp:**
-- Kiểm tra MONGODB_URI trong .env.local
-- Kiểm tra username/password
-- Kiểm tra IP whitelist trên MongoDB Atlas
-- Kiểm tra internet connection
-
-### Lỗi AUTH_SECRET
-```
-Error: AUTH_SECRET is not set
-```
-**Giải pháp:**
-- Tạo AUTH_SECRET mới
-- Đảm bảo file .env.local tồn tại
-- Restart development server
-
-### Port 3000 đã được sử dụng
-```
-Error: Port 3000 is already in use
-```
-**Giải pháp:**
-- Kill process: `npx kill-port 3000`
-- Hoặc dùng port khác: `npm run dev -- -p 3001`
-
-### Dependencies errors
-```
-Error: Cannot find module...
-```
-**Giải pháp:**
-- Xóa node_modules: `rm -rf node_modules`
-- Xóa package-lock.json
-- Cài lại: `npm install`
-
-## 📱 Build Production
+## Build production
 
 ```bash
-# Build
+npm run lint
 npm run build
-
-# Run production server
 npm run start
 ```
-
-## 🎨 Các Màn Hình Chính
-
-1. **Landing Page** (`/`) - Trang giới thiệu
-2. **Login** (`/login`) - Đăng nhập
-3. **Register** (`/register`) - Đăng ký
-4. **Dashboard** (`/dashboard`) - Tổng quan
-5. **Transactions** (`/dashboard/transactions`) - Quản lý giao dịch
-6. **Budget** (`/dashboard/budget`) - Quản lý ngân sách
-7. **Reports** (`/dashboard/reports`) - Báo cáo & phân tích
-
-## 💡 Tips
-
-- Dùng Chrome DevTools để test responsive
-- Dùng MongoDB Compass để xem database
-- Check console log để debug
-- Test trên nhiều trình duyệt khác nhau
-
-## 🆘 Cần Hỗ Trợ?
-
-- Kiểm tra console log (F12)
-- Kiểm tra Network tab
-- Kiểm tra MongoDB connection
-- Đảm bảo .env.local được cấu hình đúng
-
----
-
-**Chúc bạn code vui vẻ! 🎉**

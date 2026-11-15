@@ -1,22 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: 255 255 255; /* #ffffff */
-  --foreground: 34 34 34; /* #222222 - softer than pure black */
-}
-
-/* Class-based dark mode (manual toggle) */
-html.dark {
-  --background: 18 18 18; /* #121212 - recommended dark background */
-  --foreground: 238 238 238; /* #eeeeee - softer than pure white */
-}
-
-/* Dark mode for mobile and desktop (fallback for system preference) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 18 18 18; /* #121212 */
-    --foreground: 238 238 238; /* #eeeeee */
-  }
+  color-scheme: light;
+  background: #f7f8f6;
+  color: #0f172a;
 }
 
 @theme inline {
@@ -26,55 +13,18 @@ html.dark {
   --font-mono: var(--font-geist-mono);
 }
 
-html {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-}
-
 body {
-  background-color: rgb(var(--background));
-  color: rgb(var(--foreground));
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f7f8f6;
+  color: #0f172a;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
-  color-scheme: light dark;
+  min-height: 100dvh;
 }
 
-/* Dark mode image optimization - reduce brightness to avoid eye strain */
-html.dark img {
-  filter: brightness(0.8) contrast(1.2);
-}
-
-/* Exception for logos and icons that should remain bright */
-html.dark img.no-dark-filter,
-html.dark .no-dark-filter img {
-  filter: none;
-}
-
-@layer utilities {
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-      transform: translate(0px, 0px) scale(1);
-    }
-  }
-  
-  .animate-blob {
-    animation: blob 7s infinite;
-  }
-  
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-  
-  .animation-delay-4000 {
-    animation-delay: 4s;
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }

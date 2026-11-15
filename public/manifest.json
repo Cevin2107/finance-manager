@@ -1,11 +1,11 @@
 {
-  "name": "FinanceApp - Quản lý tài chính",
-  "short_name": "FinanceApp",
-  "description": "Ứng dụng quản lý tài chính thông minh, hiện đại và dễ sử dụng",
+  "name": "Sổ Thu Chi - Quản lý tài chính",
+  "short_name": "Sổ Thu Chi",
+  "description": "Theo dõi thu chi, ngân sách và mục tiêu tiết kiệm.",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3B82F6",
+  "theme_color": "#047857",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -40,7 +40,7 @@
       "name": "Tiết kiệm",
       "short_name": "Tiết kiệm",
       "description": "Quản lý mục tiêu tiết kiệm",
-      "url": "/dashboard/budget",
+      "url": "/dashboard/savings",
       "icons": [
         {
           "src": "/image.png",
