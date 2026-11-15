@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { formatMoney, inputClassName } from '@/components/dashboard/FinanceUI';
 
 const suggestionMultipliers = [1_000, 10_000, 100_000] as const;
@@ -37,12 +37,8 @@ export function MoneyInput({
   placeholder?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [displayValue, setDisplayValue] = useState(() => formatAmount(value));
+  const displayValue = formatAmount(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    setDisplayValue(formatAmount(value));
-  }, [value]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const enteredValue = event.currentTarget.value;
@@ -52,7 +48,6 @@ export function MoneyInput({
     const nextValue = digits ? Number(digits) : 0;
     const formattedValue = formatDigits(digits);
 
-    setDisplayValue(formattedValue);
     setShowSuggestions(digits.length > 0);
     onChange(Number.isFinite(nextValue) ? nextValue : 0);
 
@@ -101,7 +96,6 @@ export function MoneyInput({
               key={amount}
               type="button"
               onClick={() => {
-                setDisplayValue(formatAmount(amount));
                 setShowSuggestions(false);
                 onChange(amount);
               }}

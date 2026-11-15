@@ -347,7 +347,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    void connectAndLoad(() => active);
+    void Promise.resolve().then(() => {
+      if (active) return connectAndLoad(() => active);
+    });
 
     return () => {
       active = false;
