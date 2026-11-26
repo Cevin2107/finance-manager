@@ -16,7 +16,7 @@ from public.finance_data
 order by updated_at desc;
 ```
 
-Sau khi đăng nhập bằng mật khẩu của web, mọi thiết bị đọc cùng một sổ chính. Mở lại trình duyệt cũ và chọn **Sao lưu sổ cũ** hoặc **Nhập từ sổ cũ** trong Tổng quan nếu còn dữ liệu tại đó. Khi nhập, sổ giữ các mục hiện tại nếu trùng ID, hoặc nếu trùng danh mục và tháng đối với ngân sách. Đối chiếu bản sao cũ nếu từng sửa mục đã có trong lúc mất kết nối. Nếu một thiết bị cũ có dữ liệu trên Supabase nhưng mất bản sao trình duyệt, lấy JSON của trường `data` từ đúng dòng trong SQL Editor rồi nhập tệp JSON đó.
+Sau khi đăng nhập bằng mật khẩu của web, mọi thiết bị đọc cùng một sổ chính.
 
 Tính năng chia sẻ tháng vẫn dùng Supabase Anonymous Sign-Ins. Bật **Allow new users to sign up** và **Anonymous Sign-Ins** trong Supabase Authentication nếu dùng tính năng đó.
 

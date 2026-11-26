@@ -14,7 +14,7 @@
 
 ## Cấu hình và chạy
 
-Xem [hướng dẫn cấu hình](SETUP.md) để dùng một sổ Supabase trên nhiều thiết bị và nhập dữ liệu từ trình duyệt cũ.
+Xem [hướng dẫn cấu hình](SETUP.md) để dùng một sổ Supabase trên nhiều thiết bị.
 
 ## Kiểm tra và build
 

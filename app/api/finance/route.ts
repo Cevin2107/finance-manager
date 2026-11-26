@@ -54,7 +54,7 @@ async function handle(request: NextRequest) {
 
     if (result.error) throw result.error;
     if (!result.data) {
-      return reply({ error: 'Sổ đã thay đổi trên thiết bị khác. Hãy tải lại dữ liệu và kiểm tra trước khi lưu.' }, 409);
+      return reply({ error: 'Sổ đã thay đổi trên thiết bị khác. Hãy tải lại trang và kiểm tra trước khi lưu.' }, 409);
     }
     return reply({ data: result.data.data, updatedAt: result.data.updated_at });
   } catch (error) {

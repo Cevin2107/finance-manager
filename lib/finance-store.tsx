@@ -2,27 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { isFinanceData, type FinanceData, type SharedMonth, type Transaction } from './finance-data';
+import { type FinanceData, type SharedMonth, type Transaction } from './finance-data';
 
 export type { Budget, SavingsGoal, SharedMonth, Transaction } from './finance-data';
 
 type Snapshot = { data: FinanceData; updatedAt: string | null };
 type FinanceContextValue = FinanceData & {
   updateFinanceData: (update: (current: FinanceData) => FinanceData) => Promise<void>;
-  refreshFinanceData: () => Promise<void>;
-  syncStatus: 'ready' | 'loading' | 'saving' | 'error';
 };
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
-
-export function readLegacyFinanceData() {
-  try {
-    const data: unknown = JSON.parse(localStorage.getItem('so-thu-chi-data-v1') ?? 'null');
-    return isFinanceData(data) ? data : null;
-  } catch {
-    return null;
-  }
-}
 
 async function requestSnapshot(options?: RequestInit): Promise<Snapshot> {
   const response = await fetch('/api/finance', { ...options, cache: 'no-store' });
@@ -39,22 +28,19 @@ async function requestSnapshot(options?: RequestInit): Promise<Snapshot> {
 export function FinanceProvider({ children }: { children: ReactNode }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState('');
-  const [syncStatus, setSyncStatus] = useState<FinanceContextValue['syncStatus']>('loading');
   const current = useRef<Snapshot | null>(null);
   const busy = useRef(false);
 
   const refreshFinanceData = useCallback(async () => {
     if (busy.current) return;
     busy.current = true;
-    setSyncStatus('loading');
+    setError('');
     try {
       const next = await requestSnapshot();
       current.current = next;
       setSnapshot(next);
-      setSyncStatus('ready');
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Không thể tải sổ thu chi.');
-      setSyncStatus('error');
     } finally {
       busy.current = false;
     }
@@ -71,7 +57,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     if (!previous) throw new Error('Hãy tải sổ thu chi trước khi ghi dữ liệu.');
     const data = update(previous.data);
     busy.current = true;
-    setSyncStatus('saving');
     try {
       const next = await requestSnapshot({
         method: 'PUT',
@@ -80,10 +65,6 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       });
       current.current = next;
       setSnapshot(next);
-      setSyncStatus('ready');
-    } catch (failure) {
-      setSyncStatus('error');
-      throw failure;
     } finally {
       busy.current = false;
     }
@@ -94,9 +75,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
       <main className="flex min-h-screen items-center justify-center bg-[#f7f8f6] px-5">
         <div className="max-w-sm text-center">
           <p role="status" className="font-semibold text-slate-900">
-            {syncStatus === 'error' ? error : 'Đang tải sổ thu chi…'}
+            {error || 'Đang tải sổ thu chi…'}
           </p>
-          {syncStatus === 'error' && (
+          {error && (
             <button type="button" onClick={refreshFinanceData} className="mt-4 rounded-xl bg-emerald-700 px-4 py-2 text-white">
               Thử lại
             </button>
@@ -107,7 +88,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <FinanceContext.Provider value={{ ...snapshot.data, updateFinanceData, refreshFinanceData, syncStatus }}>
+    <FinanceContext.Provider value={{ ...snapshot.data, updateFinanceData }}>
       {children}
     </FinanceContext.Provider>
   );
