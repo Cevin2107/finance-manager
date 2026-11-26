@@ -25,14 +25,14 @@ export const metadata: Metadata = {
   applicationName: "Sổ Thu Chi",
   icons: {
     icon: [
-      { url: "/image.png", sizes: "any", type: "image/png" },
-      { url: "/image.png", sizes: "192x192", type: "image/png" },
-      { url: "/image.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/image.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: "/image.png",
+    shortcut: "/icons/favicon-32x32.png",
   },
 };
 
@@ -56,8 +56,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="FinanceApp" />
-        <link rel="apple-touch-icon" href="/image.png" />
-        <link rel="icon" type="image/png" href="/image.png" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" href="/icons/favicon-32x32.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
