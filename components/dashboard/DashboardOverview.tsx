@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { FinanceDataTools } from './FinanceDataTools';
 import {
   ArrowDownLeft,
-  ArrowRight,
   ArrowUpRight,
   CircleDollarSign,
   Plus,
-  Sparkles,
   Target,
   Wallet,
 } from 'lucide-react';
@@ -86,24 +85,7 @@ export function DashboardOverview() {
         }
       />
 
-      <div className="mb-6 rounded-2xl bg-emerald-900 p-5 text-white sm:flex sm:items-center sm:justify-between sm:p-7">
-        <div className="flex items-start gap-4">
-          <div className="rounded-xl bg-white/10 p-3">
-            <Sparkles size={21} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-emerald-100">Một thói quen nhỏ, thay đổi lớn</p>
-            <p className="mt-1 text-lg font-semibold">Ghi lại giao dịch ngay khi phát sinh.</p>
-            <p className="mt-1 text-sm text-emerald-100/80">Bạn sẽ luôn biết mình còn bao nhiêu để chi tiêu.</p>
-          </div>
-        </div>
-        <Link
-          href="/dashboard/transactions"
-          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-emerald-200 sm:mt-0"
-        >
-          Xem giao dịch <ArrowRight size={16} />
-        </Link>
-      </div>
+      <FinanceDataTools />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {

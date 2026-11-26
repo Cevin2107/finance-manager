@@ -1,4 +1,4 @@
-const ACCESS_PASSWORD = 'Anhquan210706';
+const ACCESS_PASSWORD = process.env.FINANCE_ACCESS_PASSWORD;
 const encoder = new TextEncoder();
 
 async function signingKey() {
@@ -27,6 +27,7 @@ function decodeBase64Url(value: string) {
 }
 
 export async function checkAccessPassword(password: string) {
+  if (!ACCESS_PASSWORD) return false;
   const [submitted, expected] = await Promise.all([
     crypto.subtle.digest('SHA-256', encoder.encode(password)),
     crypto.subtle.digest('SHA-256', encoder.encode(ACCESS_PASSWORD)),
@@ -47,7 +48,7 @@ export async function createAccessToken(expiresAt: number) {
 }
 
 export async function verifyAccessToken(token: string | undefined) {
-  if (!token) return false;
+  if (!ACCESS_PASSWORD || !token) return false;
   const separator = token.indexOf('.');
   if (separator <= 0 || separator === token.length - 1) return false;
   const expiry = token.slice(0, separator);

@@ -12,28 +12,9 @@
 - Chia sẻ snapshot thu chi tháng hiện tại bằng liên kết có hạn dùng và mã truy cập 6 chữ số.
 - Giao diện tương thích với điện thoại và có thể cài đặt như PWA.
 
-## Cấu hình Supabase
+## Cấu hình và chạy
 
-1. Tạo `.env.local` từ `.env.example`, sau đó điền Project URL và Publishable key trong Supabase.
-2. Trong Supabase Dashboard, bật **Allow new users to sign up** và **Anonymous Sign-Ins** tại Authentication → Sign In / Providers.
-3. Chạy lần lượt các migration trong `supabase/migrations` trong Supabase SQL Editor để tạo bảng, bật Row Level Security và cấu hình chia sẻ tháng.
-
-Ứng dụng tự tạo danh tính lưu trữ ẩn danh, không có màn hình đăng nhập. Chính sách RLS giới hạn mỗi danh tính chỉ đọc và sửa dữ liệu của mình.
-
-## Bắt đầu
-
-Yêu cầu Node.js 20 trở lên.
-
-```bash
-npm install
-npm run dev
-```
-
-Mở [http://localhost:3000](http://localhost:3000).
-
-## Lưu trữ dữ liệu
-
-Dữ liệu được lưu trong Supabase và giữ bản sao cục bộ trên trình duyệt. Liên kết chia sẻ chỉ chứa snapshot các giao dịch tháng tại thời điểm tạo, cần mã 6 chữ số riêng và tự hết hạn theo thời gian đã chọn. Không có đồng bộ liên thiết bị hoặc cách khôi phục danh tính ẩn danh sau khi xóa dữ liệu trình duyệt.
+Xem [hướng dẫn cấu hình](SETUP.md) để dùng một sổ Supabase trên nhiều thiết bị và nhập dữ liệu từ trình duyệt cũ.
 
 ## Kiểm tra và build
 

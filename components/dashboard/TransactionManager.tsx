@@ -27,6 +27,7 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
   const { transactions, updateFinanceData } = useFinanceData();
   const notify = useToast();
   const [query, setQuery] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [editing, setEditing] = useState<Transaction | null>(null);
@@ -42,13 +43,14 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
   const visibleTransactions = useMemo(
     () =>
       [...transactions]
+        .filter((transaction) => !monthFilter || transaction.date.slice(0, 7) === monthFilter)
         .filter((transaction) => typeFilter === 'all' || transaction.type === typeFilter)
         .filter((transaction) => {
           const searchText = `${transaction.category} ${transaction.description}`.toLocaleLowerCase('vi');
           return searchText.includes(query.toLocaleLowerCase('vi'));
         })
         .sort((a, b) => b.date.localeCompare(a.date)),
-    [transactions, typeFilter, query]
+    [transactions, typeFilter, query, monthFilter]
   );
 
   const openNew = () => {
@@ -69,7 +71,7 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
     setIsOpen(true);
   };
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.category || !Number.isFinite(form.amount) || form.amount <= 0 || !form.date) {
       notify('Vui lòng nhập danh mục, ngày và số tiền lớn hơn 0.', { type: 'error' });
@@ -78,7 +80,7 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
 
     try {
       if (editing) {
-        updateFinanceData((data) => ({
+        await updateFinanceData((data) => ({
           ...data,
           transactions: data.transactions.map((transaction) =>
             transaction.id === editing.id ? { ...form, id: editing.id } : transaction
@@ -86,7 +88,7 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
         }));
       } else {
         const transaction: Transaction = { ...form, id: createId() };
-        updateFinanceData((data) => ({ ...data, transactions: [transaction, ...data.transactions] }));
+        await updateFinanceData((data) => ({ ...data, transactions: [transaction, ...data.transactions] }));
       }
       setIsOpen(false);
       notify(editing ? 'Đã cập nhật giao dịch.' : 'Đã thêm giao dịch.', { type: 'success' });
@@ -95,9 +97,9 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
     }
   };
 
-  const remove = (transaction: Transaction) => {
+  const remove = async (transaction: Transaction) => {
     try {
-      updateFinanceData((data) => ({
+      await updateFinanceData((data) => ({
         ...data,
         transactions: data.transactions.filter((item) => item.id !== transaction.id),
       }));
@@ -125,6 +127,14 @@ export function TransactionManager({ initialOpen = false }: { initialOpen?: bool
           <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm theo nội dung hoặc danh mục" className={`${inputClassName} pl-10`} />
         </label>
+        <div className="flex items-center gap-2">
+          <input type="month" aria-label="Lọc giao dịch theo tháng" value={monthFilter} onChange={(event) => setMonthFilter(event.target.value)} className={inputClassName} />
+          {monthFilter && (
+            <button type="button" onClick={() => setMonthFilter('')} aria-label="Xóa lọc tháng" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+              <X size={17} />
+            </button>
+          )}
+        </div>
         <div className="flex rounded-xl bg-slate-100 p-1">
           {([
             ['all', 'Tất cả'],

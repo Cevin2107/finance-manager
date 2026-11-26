@@ -32,7 +32,7 @@ export function SavingsManager() {
   const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
   const overallProgress = totalTarget > 0 ? Math.min(100, Math.round((totalSaved / totalTarget) * 100)) : 0;
 
-  const addGoal = (event: FormEvent<HTMLFormElement>) => {
+  const addGoal = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const targetAmount = form.targetAmount;
     if (
@@ -55,7 +55,7 @@ export function SavingsManager() {
         targetDate: form.targetDate,
         description: form.description.trim(),
       };
-      updateFinanceData((data) => ({ ...data, goals: [goal, ...data.goals] }));
+      await updateFinanceData((data) => ({ ...data, goals: [goal, ...data.goals] }));
       setForm({ name: '', targetAmount: 0, targetDate: '', description: '' });
       setIsGoalOpen(false);
       notify('Đã tạo mục tiêu tiết kiệm.', { type: 'success' });
@@ -64,7 +64,7 @@ export function SavingsManager() {
     }
   };
 
-  const updateBalance = (event: FormEvent<HTMLFormElement>) => {
+  const updateBalance = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedGoal) return;
     const value = amount;
@@ -78,7 +78,7 @@ export function SavingsManager() {
     }
 
     try {
-      updateFinanceData((data) => ({
+      await updateFinanceData((data) => ({
         ...data,
         goals: data.goals.map((goal) =>
           goal.id === selectedGoal.id
@@ -99,9 +99,9 @@ export function SavingsManager() {
     }
   };
 
-  const deleteGoal = (goal: SavingsGoal) => {
+  const deleteGoal = async (goal: SavingsGoal) => {
     try {
-      updateFinanceData((data) => ({ ...data, goals: data.goals.filter((item) => item.id !== goal.id) }));
+      await updateFinanceData((data) => ({ ...data, goals: data.goals.filter((item) => item.id !== goal.id) }));
       notify(`Đã xóa mục tiêu ${goal.name}.`, { type: 'success' });
     } catch (saveError) {
       notify(saveError instanceof Error ? saveError.message : 'Không thể xóa mục tiêu.', { type: 'error' });

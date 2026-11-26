@@ -47,7 +47,7 @@ export function BudgetManager() {
   const totalSpent = monthBudgets.reduce((sum, budget) => sum + (spentByCategory[budget.category] || 0), 0);
   const monthLabel = new Date(year, month - 1, 1).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
 
-  const saveBudget = (event: FormEvent<HTMLFormElement>) => {
+  const saveBudget = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!Number.isFinite(limit) || limit <= 0) {
       notify('Hạn mức phải lớn hơn 0.', { type: 'error' });
@@ -55,7 +55,7 @@ export function BudgetManager() {
     }
 
     try {
-      updateFinanceData((data) => {
+      await updateFinanceData((data) => {
         const existing = data.budgets.find((budget) => budget.category === category && budget.month === month && budget.year === year);
         const budget = { id: existing?.id || createId(), category, limit, month, year };
         return {
@@ -73,9 +73,9 @@ export function BudgetManager() {
     }
   };
 
-  const removeBudget = (budget: Budget) => {
+  const removeBudget = async (budget: Budget) => {
     try {
-      updateFinanceData((data) => ({ ...data, budgets: data.budgets.filter((item) => item.id !== budget.id) }));
+      await updateFinanceData((data) => ({ ...data, budgets: data.budgets.filter((item) => item.id !== budget.id) }));
       notify(`Đã xóa ngân sách ${budget.category}.`, { type: 'success' });
     } catch (saveError) {
       notify(saveError instanceof Error ? saveError.message : 'Không thể xóa ngân sách.', { type: 'error' });
